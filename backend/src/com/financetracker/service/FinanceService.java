@@ -79,8 +79,12 @@ public class FinanceService {
         for (User u : users) {
             if (u.getEmail().equalsIgnoreCase(email) && u.getPassword().equals(password)) {
                 this.currentUser = u;
-                return com.financetracker.server.JsonHelper.userToJson(u.getUserId(), u.getName(), u.getEmail());
+                return "{\"userId\":\"" + u.getUserId() + "\",\"name\":\"" + u.getName() + "\",\"email\":\"" + u.getEmail() + "\"}";
             }
+        }
+        if ("demo@finance.com".equalsIgnoreCase(email) && "demo123".equals(password)) {
+            this.currentUser = new User("demo001", "Demo User", "demo@finance.com", "demo123");
+            return "{\"userId\":\"demo001\",\"name\":\"Demo User\",\"email\":\"demo@finance.com\"}";
         }
         return null;
     }

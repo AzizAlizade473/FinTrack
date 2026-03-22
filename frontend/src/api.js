@@ -9,11 +9,32 @@ const API = axios.create({
 });
 
 // ============ AUTH ============
-export const registerUser = (name, email, password) =>
-  API.post('/auth/register', { name, email, password });
+export const registerUser = async (name, email, password) => {
+  try {
+    const res = await API.post('/auth/register', { name, email, password });
+    if (res.status === 200 || res.status === 201) {
+      return await loginUser(email, password);
+    }
+    return res;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
 
-export const loginUser = (email, password) =>
-  API.post('/auth/login', { email, password });
+export const loginUser = async (email, password) => {
+  try {
+    const res = await API.post('/auth/login', { email, password });
+    if (res.data && res.data.user) {
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+      window.location.href = "/dashboard";
+    }
+    return res;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
 
 // ============ TRANSACTIONS ============
 export const getTransactions = async () => {
@@ -47,10 +68,23 @@ export const setBudget = (category, limit) =>
   API.post('/budgets', { category, limit });
 
 // ============ REPORTS ============
-export const getMonthlyReport = (month) =>
-  API.get(`/reports/monthly?month=${month}`);
+export const getMonthlyReport = async (month) => {
+  try {
+    const res = await axios.get(`${BASE_URL}/api/reports/monthly?month=${month}`);
+    return res.data;
+  } catch (err) {
+    return {};
+  }
+};
 
-export const getCategoryReport = () => API.get('/reports/category');
+export const getCategoryReport = async () => {
+  try {
+    const res = await axios.get(`${BASE_URL}/api/reports/category`);
+    return res.data;
+  } catch (err) {
+    return {};
+  }
+};
 
 // ============ BALANCE & ALERTS ============
 export const getBalance = async () => {

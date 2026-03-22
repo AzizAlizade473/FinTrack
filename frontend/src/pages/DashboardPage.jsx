@@ -11,7 +11,18 @@ import { Link } from 'react-router-dom';
 const PIE_COLORS = ['#6c63ff', '#16a34a', '#dc2626', '#f59e0b', '#06b6d4', '#ec4899', '#8b5cf6', '#14b8a6'];
 
 export default function DashboardPage() {
-  const { user } = useContext(AuthContext);
+  let user = {};
+  try {
+    user = JSON.parse(localStorage.getItem("user") || "{}");
+  } catch(e) {
+    console.error("Invalid JSON:", localStorage.getItem("user"));
+  }
+
+  if (!user || (!user.userId && !user.id)) {
+    window.location.href = "/login";
+    return null;
+  }
+
   const showToast = useContext(ToastContext);
   const [loading, setLoading] = useState(true);
   const [balance, setBalance] = useState(0);

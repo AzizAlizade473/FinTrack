@@ -97,6 +97,7 @@ public class FinanceServer {
         String b = body(e);
         String email = extract(b, "email");
         String password = extract(b, "password");
+        System.out.println("Login attempt: " + email);
         String user = financeService.loginUser(email, password);
         if (user != null) json(e, 200, "{\"status\":\"success\",\"user\":" + user + "}");
         else json(e, 401, "{\"status\":\"error\",\"message\":\"Invalid credentials\"}");
