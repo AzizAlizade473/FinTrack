@@ -44,8 +44,8 @@ export default function TransactionsPage() {
   const fetchData = async () => {
     try {
       const [txRes, budRes] = await Promise.all([getTransactions(), getBudgets()]);
-      setTransactions(txRes.data.data);
-      setBudgets(budRes.data.data);
+      setTransactions(txRes?.transactions ?? []);
+      setBudgets(budRes?.budgets ?? []);
     } catch { showToast('Failed to load data', 'error'); }
     setLoading(false);
   };
@@ -53,7 +53,7 @@ export default function TransactionsPage() {
   const fetchTransactions = async () => {
     try {
       const res = await getTransactions();
-      setTransactions(res.data.data);
+      setTransactions(res?.transactions ?? []);
     } catch { showToast('Failed to load transactions', 'error'); }
   };
 
@@ -110,13 +110,7 @@ export default function TransactionsPage() {
       </div>
       <div>
         <label className="block text-[13px] font-medium text-navy mb-1.5">Category</label>
-        <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} className="w-full px-4 py-3 rounded-[10px] bg-white border border-border text-navy focus:border-purple focus:ring-2 focus:ring-purple/20 focus:outline-none transition-all text-[14px]">
-          <option value="" disabled>Select category from budgets</option>
-          {budgets.map(b => (
-            <option key={b.category} value={b.category}>{b.category}</option>
-          ))}
-        </select>
-        {budgets.length === 0 && <p className="text-[11px] text-red mt-1">Create a budget first on the Budgets page.</p>}
+        <input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} className="w-full px-4 py-3 rounded-[10px] bg-white border border-border text-navy placeholder-[#9ca3af] focus:border-purple focus:ring-2 focus:ring-purple/20 focus:outline-none transition-all text-[14px]" placeholder="e.g. Food, Housing, Salary" />
       </div>
     </div>
   );

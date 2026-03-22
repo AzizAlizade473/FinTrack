@@ -30,7 +30,11 @@ export default function ReportsPage() {
     setLoading(true);
     try {
       const res = await getMonthlyReport(month);
-      setMonthlyData(res.data.data);
+      setMonthlyData({
+        totalIncome: res?.totalIncome ?? res?.income ?? 0,
+        totalExpense: res?.totalExpense ?? res?.expense ?? 0,
+        netBalance: res?.netBalance ?? res?.balance ?? 0
+      });
     } catch { showToast('Failed to load monthly report', 'error'); }
     setLoading(false);
   };
@@ -39,7 +43,7 @@ export default function ReportsPage() {
     setLoading(true);
     try {
       const res = await getCategoryReport();
-      setCategoryData(res.data.data);
+      setCategoryData({ categories: res?.categories ?? [] });
     } catch { showToast('Failed to load category report', 'error'); }
     setLoading(false);
   };

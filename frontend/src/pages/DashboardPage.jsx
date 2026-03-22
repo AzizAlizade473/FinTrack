@@ -22,6 +22,8 @@ export default function DashboardPage() {
   const showToast = useContext(ToastContext);
   const [loading, setLoading] = useState(true);
   const [balance, setBalance] = useState(0);
+  const [totalIncome, setTotalIncome] = useState(0);
+  const [totalExpense, setTotalExpense] = useState(0);
   const [transactions, setTransactions] = useState([]);
   const [budgets, setBudgets] = useState([]);
   const [alerts, setAlerts] = useState([]);
@@ -31,6 +33,8 @@ export default function DashboardPage() {
       try {
         const b = await getBalance();
         setBalance(b?.balance ?? 0);
+        setTotalIncome(b?.totalIncome ?? 0);
+        setTotalExpense(b?.totalExpense ?? 0);
 
         const t = await getTransactions();
         setTransactions(t?.transactions ?? []);
@@ -49,8 +53,6 @@ export default function DashboardPage() {
     load();
   }, []);
 
-  const totalIncome = transactions.filter(t => t.type === 'INCOME').reduce((s, t) => s + t.amount, 0);
-  const totalExpense = transactions.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + t.amount, 0);
   const recentTx = [...transactions].reverse().slice(0, 5);
 
   const catMap = {};

@@ -124,7 +124,9 @@ public class FinanceServer {
     private void handleBalance(HttpExchange e) throws IOException {
         if (preflight(e)) return;
         double balance = financeService.getBalance();
-        json(e, 200, "{\"balance\":" + balance + "}");
+        double totalIncome = financeService.getTotalIncome();
+        double totalExpense = financeService.getTotalExpense();
+        json(e, 200, "{\"balance\":" + balance + ",\"totalIncome\":" + totalIncome + ",\"totalExpense\":" + totalExpense + "}");
     }
 
     private void handleAlerts(HttpExchange e) throws IOException {
@@ -193,7 +195,14 @@ public class FinanceServer {
     private void handleMonthlyReport(HttpExchange e) throws IOException {
         if (preflight(e)) return;
         String query = e.getRequestURI().getQuery();
-        String month = (query != null && query.contains("month=")) ? query.split("month=")[1] : "";
+        String month = "";
+        if (query != null) {
+            for (String param : query.split("&")) {
+                if (param.startsWith("month=")) {
+                    month = param.substring(6);
+                }
+            }
+        }
         json(e, 200, financeService.getMonthlyReportJson(month));
     }
 

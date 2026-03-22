@@ -259,18 +259,27 @@ public class FinanceService {
      * @return the current balance
      */
     public double getBalance() {
-        if (getAllTransactions() == null || getAllTransactions().isEmpty()) {
-            return 0.0;
-        }
-        double balance = 0;
+        return getTotalIncome() - getTotalExpense();
+    }
+
+    public double getTotalIncome() {
+        double total = 0;
         for (Transaction t : getAllTransactions()) {
             if (t instanceof Income) {
-                balance += t.getAmount();
-            } else if (t instanceof Expense) {
-                balance -= t.getAmount();
+                total += t.getAmount();
             }
         }
-        return balance;
+        return total;
+    }
+
+    public double getTotalExpense() {
+        double total = 0;
+        for (Transaction t : getAllTransactions()) {
+            if (t instanceof Expense) {
+                total += t.getAmount();
+            }
+        }
+        return total;
     }
 
     // ====================== ALERTS ======================
@@ -411,17 +420,23 @@ public class FinanceService {
     }
 
     public String getMonthlyReportJson(String month) {
-        if (getAllTransactions() == null || getAllTransactions().isEmpty()) {
-            return "{\"income\":0,\"expense\":0,\"balance\":0}";
+        double totalIncome = 0;
+        double totalExpense = 0;
+        for (Transaction t : getAllTransactions()) {
+            if (month != null && !month.isEmpty() && t.getDate() != null && !t.getDate().startsWith(month)) {
+                continue;
+            }
+            if (t instanceof Income) {
+                totalIncome += t.getAmount();
+            } else if (t instanceof Expense) {
+                totalExpense += t.getAmount();
+            }
         }
-        MonthlySummaryReport report = generateMonthlyReport(month);
-        double totalIncome = report.getTotalIncome();
-        double totalExpense = report.getTotalExpense();
         double netBalance = totalIncome - totalExpense;
 
-        return "{\"income\":" + totalIncome + ","
-                + "\"expense\":" + totalExpense + ","
-                + "\"balance\":" + netBalance + "}";
+        return "{\"totalIncome\":" + totalIncome + ","
+                + "\"totalExpense\":" + totalExpense + ","
+                + "\"netBalance\":" + netBalance + "}";
     }
 
     public String getCategoryReportJson() {
