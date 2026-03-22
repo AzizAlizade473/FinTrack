@@ -75,10 +75,9 @@ public class FinanceServer {
      * @param exchange the HTTP exchange to add headers to
      */
     private static void addCorsHeaders(HttpExchange exchange) {
-        exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-        exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-        exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
     }
 
     /**
@@ -104,6 +103,7 @@ public class FinanceServer {
      */
     private static void sendResponse(HttpExchange exchange, int statusCode, String jsonResponse) throws IOException {
         addCorsHeaders(exchange);
+        exchange.getResponseHeaders().add("Content-Type", "application/json; charset=UTF-8");
         byte[] responseBytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
         exchange.sendResponseHeaders(statusCode, responseBytes.length);
         OutputStream os = exchange.getResponseBody();
