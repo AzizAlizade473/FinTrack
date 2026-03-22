@@ -19,40 +19,40 @@ public class FinanceServer {
     public void start() throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
 
-        server.createContext("/health",                    this::handleHealth).getFilters().add(corsFilter());
-        server.createContext("/api/auth/register",         this::handleRegister).getFilters().add(corsFilter());
-        server.createContext("/api/auth/login",            this::handleLogin).getFilters().add(corsFilter());
-        server.createContext("/api/balance",               this::handleBalance).getFilters().add(corsFilter());
-        server.createContext("/api/alerts",                this::handleAlerts).getFilters().add(corsFilter());
-        server.createContext("/api/budgets",               this::handleBudgets).getFilters().add(corsFilter());
-        server.createContext("/api/reports/monthly",       this::handleMonthlyReport).getFilters().add(corsFilter());
-        server.createContext("/api/reports/category",      this::handleCategoryReport).getFilters().add(corsFilter());
-        server.createContext("/api/transactions/income",   this::handleAddIncome).getFilters().add(corsFilter());
-        server.createContext("/api/transactions/expense",  this::handleAddExpense).getFilters().add(corsFilter());
-        server.createContext("/api/transactions",          this::handleTransactions).getFilters().add(corsFilter());
+        server.createContext("/health",                    this::handleHealth);
+        server.createContext("/api/auth/register",         this::handleRegister);
+        server.createContext("/api/auth/login",            this::handleLogin);
+        server.createContext("/api/balance",               this::handleBalance);
+        server.createContext("/api/alerts",                this::handleAlerts);
+        server.createContext("/api/budgets",               this::handleBudgets);
+        server.createContext("/api/reports/monthly",       this::handleMonthlyReport);
+        server.createContext("/api/reports/category",      this::handleCategoryReport);
+        server.createContext("/api/transactions/income",   this::handleAddIncome);
+        server.createContext("/api/transactions/expense",  this::handleAddExpense);
+        server.createContext("/api/transactions",          this::handleTransactions);
 
         server.setExecutor(null);
         server.start();
         System.out.println("Server started on port " + port);
     }
 
-    private com.sun.net.httpserver.Filter corsFilter() {
-        return new com.sun.net.httpserver.Filter() {
-            public void doFilter(HttpExchange exchange, Chain chain) throws IOException {
-                exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-                exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
-                exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
-                if (exchange.getRequestMethod().equalsIgnoreCase("OPTIONS")) {
-                    exchange.sendResponseHeaders(204, -1);
-                    return;
-                }
-                chain.doFilter(exchange);
-            }
-            public String description() { return "CORS"; }
-        };
+    private void addCors(HttpExchange e) {
+        e.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+        e.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+        e.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
+    }
+
+    private boolean preflight(HttpExchange e) throws IOException {
+        addCors(e);
+        if (e.getRequestMethod().equalsIgnoreCase("OPTIONS")) {
+            e.sendResponseHeaders(204, -1);
+            return true;
+        }
+        return false;
     }
 
     private void json(HttpExchange e, int code, String body) throws IOException {
+        addCors(e);
         e.getResponseHeaders().set("Content-Type", "application/json");
         byte[] b = body.getBytes("UTF-8");
         e.sendResponseHeaders(code, b.length);
@@ -69,27 +69,48 @@ public class FinanceServer {
         int i = json.indexOf(search);
         if (i == -1) return "";
         int colon = json.indexOf(":", i);
-        int quote1 = json.indexOf("\"", colon);
-        int quote2 = json.indexOf("\"", quote1 + 1);
-        return json.substring(quote1 + 1, quote2);
+        if (colon == -1) return "";
+        // Skip whitespace after colon
+        int pos = colon + 1;
+        while (pos < json.length() && json.charAt(pos) == ' ') pos++;
+        if (pos >= json.length()) return "";
+        // Check if value is quoted string or unquoted (number/boolean)
+        if (json.charAt(pos) == '"') {
+            int quote2 = json.indexOf("\"", pos + 1);
+            if (quote2 == -1) return "";
+            return json.substring(pos + 1, quote2);
+        } else {
+            // Unquoted value (number, boolean, null)
+            int end = pos;
+            while (end < json.length() && json.charAt(end) != ',' && json.charAt(end) != '}' && json.charAt(end) != ']') {
+                end++;
+            }
+            return json.substring(pos, end).trim();
+        }
     }
 
+    // ============ HANDLERS ============
+
     private void handleHealth(HttpExchange e) throws IOException {
+        if (preflight(e)) return;
         json(e, 200, "{\"status\":\"ok\"}");
     }
 
     private void handleRegister(HttpExchange e) throws IOException {
+        if (preflight(e)) return;
         if (!e.getRequestMethod().equalsIgnoreCase("POST")) { json(e, 405, "{\"error\":\"method not allowed\"}"); return; }
         String b = body(e);
         String name = extract(b, "name");
         String email = extract(b, "email");
         String password = extract(b, "password");
+        System.out.println("Register attempt: " + email);
         boolean ok = financeService.registerUser(name, email, password);
         if (ok) json(e, 200, "{\"status\":\"success\",\"message\":\"Registered\"}");
         else json(e, 400, "{\"status\":\"error\",\"message\":\"Email already exists\"}");
     }
 
     private void handleLogin(HttpExchange e) throws IOException {
+        if (preflight(e)) return;
         if (!e.getRequestMethod().equalsIgnoreCase("POST")) { json(e, 405, "{\"error\":\"method not allowed\"}"); return; }
         String b = body(e);
         String email = extract(b, "email");
@@ -101,27 +122,33 @@ public class FinanceServer {
     }
 
     private void handleBalance(HttpExchange e) throws IOException {
+        if (preflight(e)) return;
         double balance = financeService.getBalance();
         json(e, 200, "{\"balance\":" + balance + "}");
     }
 
     private void handleAlerts(HttpExchange e) throws IOException {
+        if (preflight(e)) return;
         json(e, 200, financeService.getAlertsJson());
     }
 
     private void handleBudgets(HttpExchange e) throws IOException {
+        if (preflight(e)) return;
         if (e.getRequestMethod().equalsIgnoreCase("GET")) {
             json(e, 200, financeService.getBudgetsJson());
         } else if (e.getRequestMethod().equalsIgnoreCase("POST")) {
             String b = body(e);
             String category = extract(b, "category");
-            double limit = Double.parseDouble(extract(b, "limit"));
+            String limitStr = extract(b, "limit");
+            double limit = 0;
+            try { limit = Double.parseDouble(limitStr); } catch (Exception ex) { /* default 0 */ }
             financeService.setBudget(category, limit);
             json(e, 200, "{\"status\":\"success\"}");
         }
     }
 
     private void handleTransactions(HttpExchange e) throws IOException {
+        if (preflight(e)) return;
         if (e.getRequestMethod().equalsIgnoreCase("GET")) {
             json(e, 200, financeService.getTransactionsJson());
         } else if (e.getRequestMethod().equalsIgnoreCase("DELETE")) {
@@ -133,11 +160,14 @@ public class FinanceServer {
     }
 
     private void handleAddIncome(HttpExchange e) throws IOException {
+        if (preflight(e)) return;
         if (!e.getRequestMethod().equalsIgnoreCase("POST")) { json(e, 405, "{\"error\":\"method not allowed\"}"); return; }
         String b = body(e);
+        double amount = 0;
+        try { amount = Double.parseDouble(extract(b, "amount")); } catch (Exception ex) { /* default 0 */ }
         financeService.addIncome(
             extract(b, "description"),
-            Double.parseDouble(extract(b, "amount")),
+            amount,
             extract(b, "date"),
             extract(b, "category"),
             extract(b, "source")
@@ -146,11 +176,14 @@ public class FinanceServer {
     }
 
     private void handleAddExpense(HttpExchange e) throws IOException {
+        if (preflight(e)) return;
         if (!e.getRequestMethod().equalsIgnoreCase("POST")) { json(e, 405, "{\"error\":\"method not allowed\"}"); return; }
         String b = body(e);
+        double amount = 0;
+        try { amount = Double.parseDouble(extract(b, "amount")); } catch (Exception ex) { /* default 0 */ }
         financeService.addExpense(
             extract(b, "description"),
-            Double.parseDouble(extract(b, "amount")),
+            amount,
             extract(b, "date"),
             extract(b, "category")
         );
@@ -158,12 +191,14 @@ public class FinanceServer {
     }
 
     private void handleMonthlyReport(HttpExchange e) throws IOException {
+        if (preflight(e)) return;
         String query = e.getRequestURI().getQuery();
         String month = (query != null && query.contains("month=")) ? query.split("month=")[1] : "";
         json(e, 200, financeService.getMonthlyReportJson(month));
     }
 
     private void handleCategoryReport(HttpExchange e) throws IOException {
+        if (preflight(e)) return;
         json(e, 200, financeService.getCategoryReportJson());
     }
 }

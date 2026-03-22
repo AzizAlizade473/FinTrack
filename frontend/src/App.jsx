@@ -14,7 +14,10 @@ export const AuthContext = createContext(null);
 export const ToastContext = createContext(null);
 
 function ProtectedRoute({ children }) {
-  const user = JSON.parse(localStorage.getItem('user'));
+  const user = (() => {
+    try { return JSON.parse(localStorage.getItem('user')); }
+    catch { return null; }
+  })();
   if (!user) return <Navigate to="/login" replace />;
   return children;
 }
@@ -66,7 +69,10 @@ function AppLayout({ children }) {
 }
 
 export default function App() {
-  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user')));
+  const [user, setUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('user')); }
+    catch { return null; }
+  });
   const [toast, setToast] = useState(null);
 
   const showToast = (message, type = 'success') => {

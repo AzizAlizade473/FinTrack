@@ -17,7 +17,7 @@ export const registerUser = async (name, email, password) => {
     }
     return res;
   } catch (err) {
-    console.error(err);
+    console.error("registerUser error:", err);
     throw err;
   }
 };
@@ -27,11 +27,10 @@ export const loginUser = async (email, password) => {
     const res = await API.post('/auth/login', { email, password });
     if (res.data && res.data.user) {
       localStorage.setItem("user", JSON.stringify(res.data.user));
-      window.location.href = "/dashboard";
     }
     return res;
   } catch (err) {
-    console.error(err);
+    console.error("loginUser error:", err);
     throw err;
   }
 };
@@ -39,57 +38,86 @@ export const loginUser = async (email, password) => {
 // ============ TRANSACTIONS ============
 export const getTransactions = async () => {
   try {
-    const res = await axios.get(`${BASE_URL}/api/transactions`);
+    const res = await API.get('/transactions');
     return res.data;
   } catch (err) {
     console.error("getTransactions error:", err);
-    return [];
+    return { transactions: [] };
   }
 };
 
-export const addIncome = (data) => API.post('/transactions/income', data);
+export const addIncome = async (data) => {
+  try {
+    return await API.post('/transactions/income', data);
+  } catch (err) {
+    console.error("addIncome error:", err);
+    throw err;
+  }
+};
 
-export const addExpense = (data) => API.post('/transactions/expense', data);
+export const addExpense = async (data) => {
+  try {
+    return await API.post('/transactions/expense', data);
+  } catch (err) {
+    console.error("addExpense error:", err);
+    throw err;
+  }
+};
 
-export const deleteTransaction = (id) => API.delete(`/transactions/${id}`);
+export const deleteTransaction = async (id) => {
+  try {
+    return await API.delete(`/transactions/${id}`);
+  } catch (err) {
+    console.error("deleteTransaction error:", err);
+    throw err;
+  }
+};
 
 // ============ BUDGETS ============
 export const getBudgets = async () => {
   try {
-    const res = await axios.get(`${BASE_URL}/api/budgets`);
+    const res = await API.get('/budgets');
     return res.data;
   } catch (err) {
     console.error("getBudgets error:", err);
-    return [];
+    return { budgets: [] };
   }
 };
 
-export const setBudget = (category, limit) =>
-  API.post('/budgets', { category, limit });
+export const setBudget = async (category, limit) => {
+  try {
+    return await API.post('/budgets', { category, limit });
+  } catch (err) {
+    console.error("setBudget error:", err);
+    throw err;
+  }
+};
 
 // ============ REPORTS ============
 export const getMonthlyReport = async (month) => {
   try {
-    const res = await axios.get(`${BASE_URL}/api/reports/monthly?month=${month}`);
+    const res = await API.get(`/reports/monthly?month=${month}`);
     return res.data;
   } catch (err) {
-    return {};
+    console.error("getMonthlyReport error:", err);
+    return { income: 0, expense: 0, balance: 0 };
   }
 };
 
 export const getCategoryReport = async () => {
   try {
-    const res = await axios.get(`${BASE_URL}/api/reports/category`);
+    const res = await API.get('/reports/category');
     return res.data;
   } catch (err) {
-    return {};
+    console.error("getCategoryReport error:", err);
+    return { categories: [] };
   }
 };
 
 // ============ BALANCE & ALERTS ============
 export const getBalance = async () => {
   try {
-    const res = await axios.get(`${BASE_URL}/api/balance`);
+    const res = await API.get('/balance');
     return res.data;
   } catch (err) {
     console.error("getBalance error:", err);
@@ -99,11 +127,11 @@ export const getBalance = async () => {
 
 export const getAlerts = async () => {
   try {
-    const res = await axios.get(`${BASE_URL}/api/alerts`);
+    const res = await API.get('/alerts');
     return res.data;
   } catch (err) {
     console.error("getAlerts error:", err);
-    return [];
+    return { alerts: [] };
   }
 };
 

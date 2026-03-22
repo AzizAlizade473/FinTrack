@@ -8,7 +8,7 @@ import LoadingSkeleton from '../components/LoadingSkeleton.jsx';
 
 export default function BudgetsPage() {
   const showToast = useContext(ToastContext);
-  const [budgets, setBudgets] = useState([]);
+  const [budgets, setBudgetsState] = useState([]);
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -20,10 +20,14 @@ export default function BudgetsPage() {
 
   const fetchData = async () => {
     try {
-      const [budRes, alertRes] = await Promise.all([getBudgets(), getAlerts()]);
-      setBudgets(budRes.data.data);
-      setAlerts(alertRes.data.data);
-    } catch { showToast('Failed to load budgets', 'error'); }
+      const budData = await getBudgets();
+      setBudgetsState(budData?.budgets ?? []);
+      const alertData = await getAlerts();
+      setAlerts(alertData?.alerts ?? []);
+    } catch (err) {
+      console.error("BudgetsPage fetch error:", err);
+      showToast('Failed to load budgets', 'error');
+    }
     setLoading(false);
   };
 

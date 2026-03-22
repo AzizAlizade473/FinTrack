@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { AuthContext, ToastContext } from '../App.jsx';
+import { ToastContext } from '../App.jsx';
 import { getTransactions, getBalance, getBudgets, getAlerts } from '../api.js';
 import PageHeader from '../components/PageHeader.jsx';
 import StatCard from '../components/StatCard.jsx';
@@ -15,12 +15,8 @@ export default function DashboardPage() {
   try {
     user = JSON.parse(localStorage.getItem("user") || "{}");
   } catch(e) {
-    console.error("Invalid JSON:", localStorage.getItem("user"));
-  }
-
-  if (!user || (!user.userId && !user.id)) {
-    window.location.href = "/login";
-    return null;
+    console.error("Invalid user JSON in localStorage");
+    user = {};
   }
 
   const showToast = useContext(ToastContext);
@@ -31,28 +27,27 @@ export default function DashboardPage() {
   const [alerts, setAlerts] = useState([]);
 
   useEffect(() => {
-    fetchData();
+    const load = async () => {
+      try {
+        const b = await getBalance();
+        setBalance(b?.balance ?? 0);
+
+        const t = await getTransactions();
+        setTransactions(t?.transactions ?? []);
+
+        const bu = await getBudgets();
+        setBudgets(bu?.budgets ?? []);
+
+        const al = await getAlerts();
+        setAlerts(al?.alerts ?? []);
+      } catch (err) {
+        console.error("Dashboard fetch error:", err);
+        showToast('Failed to load dashboard data', 'error');
+      }
+      setLoading(false);
+    };
+    load();
   }, []);
-
-  const fetchData = async () => {
-    try {
-      const balanceData = await getBalance();
-      setBalance(balanceData?.balance ?? 0);
-      
-      const txData = await getTransactions();
-      setTransactions(Array.isArray(txData) ? txData : []);
-      
-      const budgetData = await getBudgets();
-      setBudgets(Array.isArray(budgetData) ? budgetData : []);
-
-      const alertData = await getAlerts();
-      setAlerts(Array.isArray(alertData) ? alertData : []);
-    } catch (err) {
-      console.error("Dashboard fetch error:", err);
-      showToast('Failed to load dashboard data', 'error');
-    }
-    setLoading(false);
-  };
 
   const totalIncome = transactions.filter(t => t.type === 'INCOME').reduce((s, t) => s + t.amount, 0);
   const totalExpense = transactions.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + t.amount, 0);
@@ -66,6 +61,7 @@ export default function DashboardPage() {
 
   const monthMap = {};
   transactions.forEach(t => {
+    if (!t.date) return;
     const m = t.date.substring(0, 7);
     if (!monthMap[m]) monthMap[m] = { month: m, Income: 0, Expense: 0 };
     if (t.type === 'INCOME') monthMap[m].Income += t.amount;
@@ -75,14 +71,14 @@ export default function DashboardPage() {
 
   if (loading) return (
     <div className="space-y-6">
-      <PageHeader title="Dashboard" subtitle={`Welcome back, ${user?.name}`} />
+      <PageHeader title="Dashboard" subtitle={`Welcome back, ${user?.name || 'User'}`} />
       <LoadingSkeleton count={4} height="h-32" />
     </div>
   );
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Dashboard" subtitle={`Welcome back, ${user?.name}`} />
+      <PageHeader title="Dashboard" subtitle={`Welcome back, ${user?.name || 'User'}`} />
 
       {alerts.length > 0 && (
         <div className="bg-red/10 border border-red/20 rounded-[12px] p-4 flex gap-3 items-start">
@@ -196,14 +192,14 @@ export default function DashboardPage() {
               const pct = b.limit > 0 ? Math.min((b.spent / b.limit) * 100, 100) : 0;
               let fillClass = "bg-green";
               if (pct >= 80 && pct < 100) fillClass = "bg-[#f59e0b]";
-              if (b.exceeded) fillClass = "bg-red";
+              if (b.spent > b.limit) fillClass = "bg-red";
 
               return (
                 <div key={i} className="group">
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-[13px] font-semibold text-navy">{b.category}</span>
                     <span className="text-[12px] font-medium text-[#6b7280]">
-                      <span className={b.exceeded ? "text-red" : "text-navy"}>${b.spent.toFixed(0)}</span> / ${b.limit.toFixed(0)}
+                      <span className={b.spent > b.limit ? "text-red" : "text-navy"}>${(b.spent || 0).toFixed(0)}</span> / ${(b.limit || 0).toFixed(0)}
                     </span>
                   </div>
                   <div className="w-full h-[6px] bg-[#f3f4f6] rounded-full overflow-hidden">

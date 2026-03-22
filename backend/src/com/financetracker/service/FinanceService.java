@@ -332,6 +332,21 @@ public class FinanceService {
         java.io.File usersFile = new java.io.File(USERS_FILE);
         if (usersFile.exists()) {
             loadData();
+            // Ensure demo user always exists even after loading
+            boolean hasDemoUser = false;
+            for (User u : users) {
+                if ("demo@finance.com".equalsIgnoreCase(u.getEmail())) {
+                    hasDemoUser = true;
+                    break;
+                }
+            }
+            if (!hasDemoUser) {
+                User demoUser = new User("demo001", "Demo User", "demo@finance.com", "demo123");
+                users.add(demoUser);
+                if (currentUser == null) currentUser = demoUser;
+                saveData();
+            }
+            System.out.println("Loaded data with " + users.size() + " users.");
             return;
         }
 
@@ -396,21 +411,23 @@ public class FinanceService {
     }
 
     public String getMonthlyReportJson(String month) {
-        if (getAllTransactions() == null || getAllTransactions().isEmpty()) return "{}";
+        if (getAllTransactions() == null || getAllTransactions().isEmpty()) {
+            return "{\"income\":0,\"expense\":0,\"balance\":0}";
+        }
         MonthlySummaryReport report = generateMonthlyReport(month);
         double totalIncome = report.getTotalIncome();
         double totalExpense = report.getTotalExpense();
         double netBalance = totalIncome - totalExpense;
 
-        return "{\"title\":\"" + report.getTitle() + "\","
-                + "\"month\":\"" + month + "\","
-                + "\"totalIncome\":" + totalIncome + ","
-                + "\"totalExpense\":" + totalExpense + ","
-                + "\"netBalance\":" + netBalance + "}";
+        return "{\"income\":" + totalIncome + ","
+                + "\"expense\":" + totalExpense + ","
+                + "\"balance\":" + netBalance + "}";
     }
 
     public String getCategoryReportJson() {
-        if (getAllTransactions() == null || getAllTransactions().isEmpty()) return "{}";
+        if (getAllTransactions() == null || getAllTransactions().isEmpty()) {
+            return "{\"categories\":[]}";
+        }
         CategoryReport report = generateCategoryReport();
         java.util.Map<String, Double> breakdown = report.getCategoryBreakdown();
 
@@ -420,8 +437,7 @@ public class FinanceService {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("{\"title\":\"").append(report.getTitle()).append("\",");
-        sb.append("\"totalSpending\":").append(totalSpending).append(",");
+        sb.append("{\"totalSpending\":").append(totalSpending).append(",");
         sb.append("\"categories\":[");
         int count = 0;
         for (java.util.Map.Entry<String, Double> entry : breakdown.entrySet()) {
