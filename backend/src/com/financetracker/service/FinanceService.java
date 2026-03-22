@@ -55,18 +55,18 @@ public class FinanceService {
      * @param password the user's password
      * @return the created User, or null if email already exists
      */
-    public User registerUser(String name, String email, String password) {
+    public boolean registerUser(String name, String email, String password) {
         // Check if email already exists
         for (User u : users) {
             if (u.getEmail().equalsIgnoreCase(email)) {
-                return null; // Email already registered
+                return false; // Email already registered
             }
         }
         String userId = UUID.randomUUID().toString().substring(0, 8);
         User newUser = new User(userId, name, email, password);
         users.add(newUser);
         saveData(); // Persist new user
-        return newUser;
+        return true;
     }
 
     /**
@@ -75,11 +75,11 @@ public class FinanceService {
      * @param password the password to verify
      * @return the authenticated User, or null if credentials are invalid
      */
-    public User loginUser(String email, String password) {
+    public String loginUser(String email, String password) {
         for (User u : users) {
             if (u.getEmail().equalsIgnoreCase(email) && u.getPassword().equals(password)) {
                 this.currentUser = u;
-                return u;
+                return com.financetracker.server.JsonHelper.userToJson(u.getUserId(), u.getName(), u.getEmail());
             }
         }
         return null;
@@ -347,7 +347,75 @@ public class FinanceService {
         setBudget("Housing", 900.0);
 
         // Save everything
-        saveData();
         System.out.println("Sample data loaded successfully!");
+    }
+
+    // ====================== JSON HELPERS FOR SERVER ======================
+
+    public String getAlertsJson() {
+        return com.financetracker.server.JsonHelper.stringsToJsonArray(getAlerts());
+    }
+
+    public String getBudgetsJson() {
+        List<String> list = new ArrayList<>();
+        for (Budget b : getAllBudgets()) {
+            list.add(com.financetracker.server.JsonHelper.budgetToJson(b.getCategory(), b.getLimit(), b.getSpent(), b.isExceeded(), b.getRemainingBudget()));
+        }
+        return com.financetracker.server.JsonHelper.toJsonArray(list);
+    }
+
+    public String getTransactionsJson() {
+        List<String> list = new ArrayList<>();
+        for (Transaction t : getAllTransactions()) {
+            String category = "";
+            String source = "";
+            if (t instanceof Income) {
+                category = ((Income) t).getCategory();
+                source = ((Income) t).getSource();
+            } else if (t instanceof Expense) {
+                category = ((Expense) t).getCategory();
+            }
+            list.add(com.financetracker.server.JsonHelper.transactionToJson(
+                    t.getId(), t.getType(), t.getAmount(),
+                    t.getDate(), t.getDescription(), category, source));
+        }
+        return com.financetracker.server.JsonHelper.toJsonArray(list);
+    }
+
+    public String getMonthlyReportJson(String month) {
+        MonthlySummaryReport report = generateMonthlyReport(month);
+        double totalIncome = report.getTotalIncome();
+        double totalExpense = report.getTotalExpense();
+        double netBalance = totalIncome - totalExpense;
+
+        return "{\"title\":\"" + com.financetracker.server.JsonHelper.escapeJson(report.getTitle()) + "\","
+                + "\"month\":\"" + com.financetracker.server.JsonHelper.escapeJson(month) + "\","
+                + "\"totalIncome\":" + totalIncome + ","
+                + "\"totalExpense\":" + totalExpense + ","
+                + "\"netBalance\":" + netBalance + ","
+                + "\"report\":\"" + com.financetracker.server.JsonHelper.escapeJson(report.generate()) + "\"}";
+    }
+
+    public String getCategoryReportJson() {
+        CategoryReport report = generateCategoryReport();
+        java.util.Map<String, Double> breakdown = report.getCategoryBreakdown();
+
+        double totalSpending = 0;
+        for (double val : breakdown.values()) {
+            totalSpending += val;
+        }
+
+        List<String> items = new ArrayList<>();
+        for (java.util.Map.Entry<String, Double> entry : breakdown.entrySet()) {
+            double pct = totalSpending > 0 ? (entry.getValue() / totalSpending) * 100 : 0;
+            items.add("{\"category\":\"" + com.financetracker.server.JsonHelper.escapeJson(entry.getKey()) + "\","
+                    + "\"total\":" + entry.getValue() + ","
+                    + "\"percentage\":" + Math.round(pct * 10.0) / 10.0 + "}");
+        }
+
+        return "{\"title\":\"" + com.financetracker.server.JsonHelper.escapeJson(report.getTitle()) + "\","
+                + "\"totalSpending\":" + totalSpending + ","
+                + "\"categories\":" + com.financetracker.server.JsonHelper.toJsonArray(items) + ","
+                + "\"report\":\"" + com.financetracker.server.JsonHelper.escapeJson(report.generate()) + "\"}";
     }
 }
