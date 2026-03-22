@@ -27,16 +27,18 @@ public class FinanceServer {
     /** The finance service that handles business logic */
     private FinanceService financeService;
     /** Server port */
-    private static final int PORT = 8080;
+    private int port;
 
     /**
      * Constructs a new FinanceServer.
      * @param financeService the service layer to use
+     * @param port the port to bind to
      * @throws IOException if server fails to start
      */
-    public FinanceServer(FinanceService financeService) throws IOException {
+    public FinanceServer(FinanceService financeService, int port) throws IOException {
         this.financeService = financeService;
-        this.server = HttpServer.create(new InetSocketAddress(PORT), 0);
+        this.port = port;
+        this.server = HttpServer.create(new InetSocketAddress(port), 0);
         registerRoutes();
     }
 
@@ -54,6 +56,7 @@ public class FinanceServer {
         server.createContext("/api/reports/category", new CategoryReportHandler());
         server.createContext("/api/balance", new BalanceHandler());
         server.createContext("/api/alerts", new AlertsHandler());
+        server.createContext("/health", new HealthHandler());
     }
 
     /**
@@ -62,7 +65,7 @@ public class FinanceServer {
     public void start() {
         server.setExecutor(null); // Use default executor
         server.start();
-        System.out.println("Finance Tracker API Server running on http://localhost:" + PORT);
+        System.out.println("Finance Tracker API Server running on port " + port);
     }
 
     // ====================== CORS HELPER ======================
@@ -520,6 +523,22 @@ public class FinanceServer {
 
             List<String> alerts = financeService.getAlerts();
             sendResponse(exchange, 200, JsonHelper.successResponse(JsonHelper.stringsToJsonArray(alerts)));
+        }
+    }
+
+    /**
+     * GET /health — Health check endpoint for Railway.
+     */
+    private class HealthHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if (handleCorsPreFlight(exchange)) return;
+            
+            if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+                sendResponse(exchange, 405, JsonHelper.errorResponse("Method not allowed"));
+                return;
+            }
+            sendResponse(exchange, 200, "{\"status\":\"ok\"}");
         }
     }
 }

@@ -1,0 +1,7 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "java -cp out com.financetracker.main.Main"
+restartPolicyType = "on_failure"

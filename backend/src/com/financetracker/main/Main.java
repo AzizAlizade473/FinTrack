@@ -48,11 +48,12 @@ public class Main {
             financeService.loadSampleData();
 
             // Start the HTTP server
-            FinanceServer server = new FinanceServer(financeService);
+            int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
+            FinanceServer server = new FinanceServer(financeService, port);
             server.start();
 
             System.out.println("========================================");
-            System.out.println("   API running at http://localhost:8080");
+            System.out.println("   API running at port: " + port);
             System.out.println("   Press Ctrl+C to stop");
             System.out.println("========================================");
 
