@@ -80,6 +80,7 @@ public class FinanceServer {
             handleAddExpense(exchange);
         });
 
+        // /api/transactions matching both GET and DELETE since {id} relies on root prefix matching in java.sun.net
         server.createContext("/api/transactions", exchange -> {
             addCorsHeaders(exchange);
             if (exchange.getRequestMethod().equalsIgnoreCase("OPTIONS")) {
