@@ -1,0 +1,17 @@
+# Frontend
+node_modules/
+dist/
+.env
+
+# Backend
+backend/out/
+*.class
+data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local JDK
+java-1.8.0-openjdk*
+
