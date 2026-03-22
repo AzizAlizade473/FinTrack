@@ -255,6 +255,9 @@ public class FinanceService {
      * @return the current balance
      */
     public double getBalance() {
+        if (getAllTransactions() == null || getAllTransactions().isEmpty()) {
+            return 0.0;
+        }
         double balance = 0;
         for (Transaction t : getAllTransactions()) {
             if (t instanceof Income) {
@@ -353,20 +356,26 @@ public class FinanceService {
     // ====================== JSON HELPERS FOR SERVER ======================
 
     public String getAlertsJson() {
-        return com.financetracker.server.JsonHelper.stringsToJsonArray(getAlerts());
+        List<String> alerts = getAlerts();
+        if (alerts == null || alerts.isEmpty()) return "[]";
+        return com.financetracker.server.JsonHelper.stringsToJsonArray(alerts);
     }
 
     public String getBudgetsJson() {
+        List<Budget> budgets = getAllBudgets();
+        if (budgets == null || budgets.isEmpty()) return "[]";
         List<String> list = new ArrayList<>();
-        for (Budget b : getAllBudgets()) {
+        for (Budget b : budgets) {
             list.add(com.financetracker.server.JsonHelper.budgetToJson(b.getCategory(), b.getLimit(), b.getSpent(), b.isExceeded(), b.getRemainingBudget()));
         }
         return com.financetracker.server.JsonHelper.toJsonArray(list);
     }
 
     public String getTransactionsJson() {
+        List<Transaction> transactions = getAllTransactions();
+        if (transactions == null || transactions.isEmpty()) return "[]";
         List<String> list = new ArrayList<>();
-        for (Transaction t : getAllTransactions()) {
+        for (Transaction t : transactions) {
             String category = "";
             String source = "";
             if (t instanceof Income) {
@@ -383,6 +392,7 @@ public class FinanceService {
     }
 
     public String getMonthlyReportJson(String month) {
+        if (getAllTransactions() == null || getAllTransactions().isEmpty()) return "{}";
         MonthlySummaryReport report = generateMonthlyReport(month);
         double totalIncome = report.getTotalIncome();
         double totalExpense = report.getTotalExpense();
@@ -397,6 +407,7 @@ public class FinanceService {
     }
 
     public String getCategoryReportJson() {
+        if (getAllTransactions() == null || getAllTransactions().isEmpty()) return "{}";
         CategoryReport report = generateCategoryReport();
         java.util.Map<String, Double> breakdown = report.getCategoryBreakdown();
 

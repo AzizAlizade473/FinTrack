@@ -25,14 +25,19 @@ export default function DashboardPage() {
 
   const fetchData = async () => {
     try {
-      const [balRes, txRes, budRes, alertRes] = await Promise.all([
-        getBalance(), getTransactions(), getBudgets(), getAlerts()
-      ]);
-      setBalance(balRes.data.data.balance);
-      setTransactions(txRes.data.data);
-      setBudgets(budRes.data.data);
-      setAlerts(alertRes.data.data);
+      const balanceData = await getBalance();
+      setBalance(balanceData?.balance ?? 0);
+      
+      const txData = await getTransactions();
+      setTransactions(Array.isArray(txData) ? txData : []);
+      
+      const budgetData = await getBudgets();
+      setBudgets(Array.isArray(budgetData) ? budgetData : []);
+
+      const alertData = await getAlerts();
+      setAlerts(Array.isArray(alertData) ? alertData : []);
     } catch (err) {
+      console.error("Dashboard fetch error:", err);
       showToast('Failed to load dashboard data', 'error');
     }
     setLoading(false);
