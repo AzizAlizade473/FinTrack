@@ -16,12 +16,12 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await loginUser(email, password);
-      if (res.data.status === 'success') {
-        login(res.data.data);
+      if (res.data && res.data.user) {
+        login(res.data.user);
         showToast('Welcome back!', 'success');
         navigate('/dashboard');
       } else {
-        showToast(res.data.message || 'Login failed', 'error');
+        showToast(res.data?.message || 'Login failed', 'error');
       }
     } catch (err) {
       showToast(err.response?.data?.message || 'Login failed', 'error');

@@ -1,13 +1,14 @@
 import { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ToastContext } from '../App.jsx';
-import { registerUser } from '../api.js';
+import { AuthContext, ToastContext } from '../App.jsx';
+import { registerUser, loginUser } from '../api.js';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const { login } = useContext(AuthContext);
   const showToast = useContext(ToastContext);
   const navigate = useNavigate();
 
@@ -15,12 +16,16 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await registerUser(name, email, password);
-      if (res.data.status === 'success') {
-        showToast('Account created! Please sign in.', 'success');
-        navigate('/login');
+      await registerUser(name, email, password);
+      // Auto-login after successful registration
+      const res = await loginUser(email, password);
+      if (res.data && res.data.user) {
+        login(res.data.user);
+        showToast('Account created! Welcome!', 'success');
+        navigate('/dashboard');
       } else {
-        showToast(res.data.message || 'Registration failed', 'error');
+        showToast('Registered! Please sign in.', 'success');
+        navigate('/login');
       }
     } catch (err) {
       showToast(err.response?.data?.message || 'Registration failed', 'error');
