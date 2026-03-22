@@ -357,38 +357,38 @@ public class FinanceService {
 
     public String getAlertsJson() {
         List<String> alerts = getAlerts();
-        if (alerts == null || alerts.isEmpty()) return "[]";
-        return com.financetracker.server.JsonHelper.stringsToJsonArray(alerts);
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"alerts\":[");
+        for (int i = 0; i < alerts.size(); i++) {
+            if (i > 0) sb.append(",");
+            sb.append("\"").append(alerts.get(i)).append("\"");
+        }
+        sb.append("]}");
+        return sb.toString();
     }
 
     public String getBudgetsJson() {
         List<Budget> budgets = getAllBudgets();
-        if (budgets == null || budgets.isEmpty()) return "[]";
-        List<String> list = new ArrayList<>();
-        for (Budget b : budgets) {
-            list.add(com.financetracker.server.JsonHelper.budgetToJson(b.getCategory(), b.getLimit(), b.getSpent(), b.isExceeded(), b.getRemainingBudget()));
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"budgets\":[");
+        for (int i = 0; i < budgets.size(); i++) {
+            if (i > 0) sb.append(",");
+            sb.append(budgets.get(i).toJson());
         }
-        return com.financetracker.server.JsonHelper.toJsonArray(list);
+        sb.append("]}");
+        return sb.toString();
     }
 
     public String getTransactionsJson() {
         List<Transaction> transactions = getAllTransactions();
-        if (transactions == null || transactions.isEmpty()) return "[]";
-        List<String> list = new ArrayList<>();
-        for (Transaction t : transactions) {
-            String category = "";
-            String source = "";
-            if (t instanceof Income) {
-                category = ((Income) t).getCategory();
-                source = ((Income) t).getSource();
-            } else if (t instanceof Expense) {
-                category = ((Expense) t).getCategory();
-            }
-            list.add(com.financetracker.server.JsonHelper.transactionToJson(
-                    t.getId(), t.getType(), t.getAmount(),
-                    t.getDate(), t.getDescription(), category, source));
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"transactions\":[");
+        for (int i = 0; i < transactions.size(); i++) {
+            if (i > 0) sb.append(",");
+            sb.append(transactions.get(i).toJson());
         }
-        return com.financetracker.server.JsonHelper.toJsonArray(list);
+        sb.append("]}");
+        return sb.toString();
     }
 
     public String getMonthlyReportJson(String month) {
@@ -398,12 +398,11 @@ public class FinanceService {
         double totalExpense = report.getTotalExpense();
         double netBalance = totalIncome - totalExpense;
 
-        return "{\"title\":\"" + com.financetracker.server.JsonHelper.escapeJson(report.getTitle()) + "\","
-                + "\"month\":\"" + com.financetracker.server.JsonHelper.escapeJson(month) + "\","
+        return "{\"title\":\"" + report.getTitle() + "\","
+                + "\"month\":\"" + month + "\","
                 + "\"totalIncome\":" + totalIncome + ","
                 + "\"totalExpense\":" + totalExpense + ","
-                + "\"netBalance\":" + netBalance + ","
-                + "\"report\":\"" + com.financetracker.server.JsonHelper.escapeJson(report.generate()) + "\"}";
+                + "\"netBalance\":" + netBalance + "}";
     }
 
     public String getCategoryReportJson() {
@@ -416,17 +415,20 @@ public class FinanceService {
             totalSpending += val;
         }
 
-        List<String> items = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"title\":\"").append(report.getTitle()).append("\",");
+        sb.append("\"totalSpending\":").append(totalSpending).append(",");
+        sb.append("\"categories\":[");
+        int count = 0;
         for (java.util.Map.Entry<String, Double> entry : breakdown.entrySet()) {
+            if (count > 0) sb.append(",");
             double pct = totalSpending > 0 ? (entry.getValue() / totalSpending) * 100 : 0;
-            items.add("{\"category\":\"" + com.financetracker.server.JsonHelper.escapeJson(entry.getKey()) + "\","
-                    + "\"total\":" + entry.getValue() + ","
-                    + "\"percentage\":" + Math.round(pct * 10.0) / 10.0 + "}");
+            sb.append("{\"category\":\"").append(entry.getKey()).append("\",")
+              .append("\"total\":").append(entry.getValue()).append(",")
+              .append("\"percentage\":").append(Math.round(pct * 10.0) / 10.0).append("}");
+            count++;
         }
-
-        return "{\"title\":\"" + com.financetracker.server.JsonHelper.escapeJson(report.getTitle()) + "\","
-                + "\"totalSpending\":" + totalSpending + ","
-                + "\"categories\":" + com.financetracker.server.JsonHelper.toJsonArray(items) + ","
-                + "\"report\":\"" + com.financetracker.server.JsonHelper.escapeJson(report.generate()) + "\"}";
+        sb.append("]}");
+        return sb.toString();
     }
 }

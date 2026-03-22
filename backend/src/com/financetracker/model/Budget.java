@@ -78,6 +78,10 @@ public class Budget implements Trackable {
         return "Tracking Budget: " + category + " - Spent: $" + spent + " / Limit: $" + limit;
     }
 
+    public String toJson() {
+        return "{\"category\":\"" + category + "\",\"limit\":" + limit + ",\"spent\":" + spent + "}";
+    }
+
     /**
      * Returns a summary of this budget.
      * @return summary string

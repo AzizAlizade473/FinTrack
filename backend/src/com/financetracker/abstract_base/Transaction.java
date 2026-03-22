@@ -36,6 +36,12 @@ public abstract class Transaction {
      */
     public abstract String getType();
 
+    /**
+     * Serializes this transaction to JSON.
+     * @return json string representation
+     */
+    public abstract String toJson();
+
     // --- Getters and Setters ---
 
     /** @return the transaction id */

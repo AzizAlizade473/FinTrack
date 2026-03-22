@@ -58,6 +58,16 @@ public class Income extends Transaction implements Trackable, Categorizable {
         return "Tracking Income: " + getDescription() + " - $" + getAmount();
     }
 
+    @Override
+    public String toJson() {
+        return "{\"id\":\"" + getId() + "\"," +
+               "\"type\":\"" + getType() + "\"," +
+               "\"amount\":" + getAmount() + "," +
+               "\"date\":\"" + getDate() + "\"," +
+               "\"description\":\"" + getDescription() + "\"," +
+               "\"category\":\"" + getCategory() + "\"}";
+    }
+
     /**
      * Returns a summary of this income.
      * @return summary string
