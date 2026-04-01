@@ -73,6 +73,25 @@ export const deleteTransaction = async (id) => {
   }
 };
 
+export const exportCSV = async () => {
+  try {
+    const response = await fetch(`${BASE_URL}/api/transactions/export`);
+    if (!response.ok) throw new Error('Export failed');
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'transactions.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("exportCSV error:", err);
+    throw err;
+  }
+};
+
 // ============ BUDGETS ============
 export const getBudgets = async () => {
   try {
@@ -132,6 +151,16 @@ export const getAlerts = async () => {
   } catch (err) {
     console.error("getAlerts error:", err);
     return { alerts: [] };
+  }
+};
+
+export const getInsights = async () => {
+  try {
+    const res = await API.get('/insights');
+    return res.data;
+  } catch (err) {
+    console.error("getInsights error:", err);
+    return { insights: [] };
   }
 };
 

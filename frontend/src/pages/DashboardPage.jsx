@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import { ToastContext } from '../App.jsx';
-import { getTransactions, getBalance, getBudgets, getAlerts } from '../api.js';
+import { getTransactions, getBalance, getBudgets, getAlerts, getInsights } from '../api.js';
 import PageHeader from '../components/PageHeader.jsx';
 import StatCard from '../components/StatCard.jsx';
 import BudgetCard from '../components/BudgetCard.jsx';
@@ -27,6 +27,7 @@ export default function DashboardPage() {
   const [transactions, setTransactions] = useState([]);
   const [budgets, setBudgets] = useState([]);
   const [alerts, setAlerts] = useState([]);
+  const [insights, setInsights] = useState([]);
 
   useEffect(() => {
     const load = async () => {
@@ -44,6 +45,9 @@ export default function DashboardPage() {
 
         const al = await getAlerts();
         setAlerts(al?.alerts ?? []);
+
+        const ins = await getInsights();
+        setInsights(ins?.insights ?? []);
       } catch (err) {
         console.error("Dashboard fetch error:", err);
         showToast('Failed to load dashboard data', 'error');
@@ -81,6 +85,26 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Dashboard" subtitle={`Welcome back, ${user?.name || 'User'}`} />
+
+      {insights.length > 0 && (
+        <div className="bg-purple/10 border border-purple/20 rounded-[12px] p-5 flex gap-4 items-start shadow-sm">
+          <div className="w-10 h-10 rounded-full bg-purple/20 flex items-center justify-center shrink-0">
+            <svg className="w-5 h-5 text-purple" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <h4 className="text-[15px] font-bold text-navy mb-2">Smart Financial Insights</h4>
+            <div className="space-y-2">
+              {insights.map((ins, i) => (
+                <p key={i} className="text-[#4b5563] text-[13.5px] font-medium leading-relaxed bg-white/50 px-3 py-1.5 rounded-[8px] border border-white/60">
+                 • {ins}
+                </p>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {alerts.length > 0 && (
         <div className="bg-red/10 border border-red/20 rounded-[12px] p-4 flex gap-3 items-start">

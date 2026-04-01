@@ -1,6 +1,6 @@
 import { useState, useContext, useEffect } from 'react';
 import { ToastContext } from '../App.jsx';
-import { getMonthlyReport, getCategoryReport } from '../api.js';
+import { getMonthlyReport, getCategoryReport, exportCSV } from '../api.js';
 import PageHeader from '../components/PageHeader.jsx';
 import StatCard from '../components/StatCard.jsx';
 import LoadingSkeleton from '../components/LoadingSkeleton.jsx';
@@ -48,6 +48,15 @@ export default function ReportsPage() {
     setLoading(false);
   };
 
+  const handleExport = async () => {
+    try {
+      await exportCSV();
+      showToast('CSV exported successfully!', 'success');
+    } catch {
+      showToast('Failed to export CSV', 'error');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader title="Reports" subtitle="Analyze your spending patterns" />
@@ -81,7 +90,7 @@ export default function ReportsPage() {
                   <button onClick={fetchMonthly} className="px-4 py-2 rounded-[8px] bg-[#f3f4f6] text-navy text-[13px] font-semibold hover:bg-[#e5e7eb] transition-all">Go</button>
                 </div>
                 {monthlyData && (
-                  <button onClick={() => showToast('Exported successfully')} className="px-4 py-2 rounded-[8px] border border-border text-navy text-[13px] font-semibold hover:bg-[#f9fafb] transition-all flex items-center gap-2">
+                  <button onClick={handleExport} className="px-4 py-2 rounded-[8px] border border-border text-navy text-[13px] font-semibold hover:bg-[#f9fafb] transition-all flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                     Export CSV
                   </button>

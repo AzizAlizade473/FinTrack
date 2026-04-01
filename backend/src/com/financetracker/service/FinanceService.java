@@ -333,52 +333,26 @@ public class FinanceService {
     }
 
     /**
-     * Loads sample data if no saved data exists.
-     * Creates a demo user with sample transactions and budgets.
+     * Initializes data. Loads saved data if exists, otherwise sets up a clean slate
+     * with an empty demo user.
      */
-    public void loadSampleData() {
+    public void initializeData() {
         // Check if data files exist
         java.io.File usersFile = new java.io.File(USERS_FILE);
         if (usersFile.exists()) {
             loadData();
-            // Ensure demo user always exists even after loading
-            boolean hasDemoUser = false;
-            for (User u : users) {
-                if ("demo@finance.com".equalsIgnoreCase(u.getEmail())) {
-                    hasDemoUser = true;
-                    break;
-                }
-            }
-            if (!hasDemoUser) {
-                User demoUser = new User("demo001", "Demo User", "demo@finance.com", "demo123");
-                users.add(demoUser);
-                if (currentUser == null) currentUser = demoUser;
-                saveData();
-            }
             System.out.println("Loaded data with " + users.size() + " users.");
             return;
         }
 
-        // Create demo user
+        System.out.println("No saved data found. Initializing clean slate.");
+        // Create demo user so login works right away, but NO records are added
         User demoUser = new User("demo001", "Demo User", "demo@finance.com", "demo123");
         users.add(demoUser);
         currentUser = demoUser;
 
-        // Add sample transactions
-        addIncome("Salary", 2000.0, "2024-03-01", "Salary", "Employer");
-        addIncome("Freelance", 500.0, "2024-03-15", "Freelance", "Client");
-        addExpense("Rent", 800.0, "2024-03-02", "Housing");
-        addExpense("Groceries", 150.0, "2024-03-10", "Food");
-        addExpense("Netflix", 15.0, "2024-03-05", "Entertainment");
-        addExpense("Gym", 40.0, "2024-03-08", "Health");
-
-        // Set sample budgets (this recalculates spending too)
-        setBudget("Food", 200.0);
-        setBudget("Entertainment", 50.0);
-        setBudget("Housing", 900.0);
-
-        // Save everything
-        System.out.println("Sample data loaded successfully!");
+        // Save immediately to establish file structure
+        saveData();
     }
 
     // ====================== JSON HELPERS FOR SERVER ======================
@@ -462,6 +436,65 @@ public class FinanceService {
               .append("\"total\":").append(entry.getValue()).append(",")
               .append("\"percentage\":").append(Math.round(pct * 10.0) / 10.0).append("}");
             count++;
+        }
+        sb.append("]}");
+        return sb.toString();
+    }
+
+    public String exportTransactionsToCSV() {
+        List<Transaction> transactions = getAllTransactions();
+        StringBuilder sb = new StringBuilder();
+        sb.append("Date,Type,Description,Category,Amount\n");
+        for (Transaction t : transactions) {
+            String type = (t instanceof Income) ? "Income" : "Expense";
+            String cat = "";
+            if (t instanceof com.financetracker.interfaces.Categorizable) {
+                cat = ((com.financetracker.interfaces.Categorizable)t).getCategory();
+            }
+            sb.append(t.getDate()).append(",")
+              .append(type).append(",")
+              .append("\"").append(t.getDescription().replace("\"", "\"\"")).append("\",")
+              .append("\"").append(cat).append("\",")
+              .append(t.getAmount()).append("\n");
+        }
+        return sb.toString();
+    }
+
+    public String getSmartInsightsJson() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"insights\":[");
+        
+        double income = getTotalIncome();
+        double expense = getTotalExpense();
+        double balance = income - expense;
+        
+        List<String> insights = new ArrayList<>();
+        
+        if (expense > income && income > 0) {
+            insights.add("Critical: You have spent more than you earned this period!");
+        } else if (balance > 0) {
+            insights.add("Great job! You have a positive net balance of $" + balance + ".");
+            if (balance > (income * 0.2)) {
+                insights.add("You're saving more than 20% of your income. Keep it up!");
+            }
+        }
+        
+        List<Budget> budgets = getAllBudgets();
+        for (Budget b : budgets) {
+            if (b.getSpent() > b.getLimit()) {
+                insights.add("Alert: You have exceeded your budget for " + b.getCategory() + " by $" + (b.getSpent() - b.getLimit()) + ".");
+            } else if (b.getSpent() > (b.getLimit() * 0.8)) {
+                insights.add("Warning: You are nearing your budget limit for " + b.getCategory() + ".");
+            }
+        }
+        
+        if (insights.isEmpty()) {
+            insights.add("Your finances are looking stable.");
+        }
+        
+        for (int i = 0; i < insights.size(); i++) {
+            if (i > 0) sb.append(",");
+            sb.append("\"").append(insights.get(i).replace("\"", "\\\"")).append("\"");
         }
         sb.append("]}");
         return sb.toString();

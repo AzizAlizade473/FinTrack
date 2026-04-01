@@ -44,8 +44,8 @@ public class Main {
             // Initialize the finance service
             FinanceService financeService = new FinanceService();
 
-            // Load sample data if no saved data exists, otherwise load saved data
-            financeService.loadSampleData();
+            // Load saved data, or initialize empty state
+            financeService.initializeData();
 
             // Start the HTTP server
             int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));

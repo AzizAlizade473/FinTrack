@@ -16,9 +16,10 @@ export default function Modal({ isOpen, onClose, title, children }) {
   return (
     <div 
       className={`fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm 
-        ${isOpen ? 'modal-overlay-enter' : 'opacity-0 transition-opacity duration-200'}`} 
+        ${isOpen ? 'modal-overlay-enter' : 'opacity-0 transition-opacity duration-200 pointer-events-none'}`} 
       onClick={onClose}
       onAnimationEnd={onAnimationEnd}
+      onTransitionEnd={onAnimationEnd}
     >
       <div
         className={`bg-white rounded-[20px] shadow-2xl w-full max-w-[480px] p-8 m-4

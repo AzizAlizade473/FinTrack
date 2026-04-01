@@ -29,7 +29,9 @@ public class FinanceServer {
         server.createContext("/api/reports/category",      this::handleCategoryReport);
         server.createContext("/api/transactions/income",   this::handleAddIncome);
         server.createContext("/api/transactions/expense",  this::handleAddExpense);
+        server.createContext("/api/transactions/export",   this::handleExportCsv);
         server.createContext("/api/transactions",          this::handleTransactions);
+        server.createContext("/api/insights",              this::handleInsights);
 
         server.setExecutor(null);
         server.start();
@@ -209,5 +211,22 @@ public class FinanceServer {
     private void handleCategoryReport(HttpExchange e) throws IOException {
         if (preflight(e)) return;
         json(e, 200, financeService.getCategoryReportJson());
+    }
+
+    private void handleExportCsv(HttpExchange e) throws IOException {
+        if (preflight(e)) return;
+        addCors(e);
+        e.getResponseHeaders().set("Content-Type", "text/csv");
+        e.getResponseHeaders().set("Content-Disposition", "attachment; filename=\"transactions.csv\"");
+        String csv = financeService.exportTransactionsToCSV();
+        byte[] b = csv.getBytes("UTF-8");
+        e.sendResponseHeaders(200, b.length);
+        e.getResponseBody().write(b);
+        e.getResponseBody().close();
+    }
+
+    private void handleInsights(HttpExchange e) throws IOException {
+        if (preflight(e)) return;
+        json(e, 200, financeService.getSmartInsightsJson());
     }
 }
