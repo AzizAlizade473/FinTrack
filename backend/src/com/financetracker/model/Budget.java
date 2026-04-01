@@ -91,4 +91,26 @@ public class Budget implements Trackable {
         String status = isExceeded() ? "EXCEEDED" : "OK";
         return "Budget [" + category + "] $" + spent + " / $" + limit + " (" + status + ")";
     }
+
+    /**
+     * Checks equality based on category name.
+     * @param o the object to compare
+     * @return true if both budgets have the same category
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || !(o instanceof Budget)) return false;
+        Budget budget = (Budget) o;
+        return java.util.Objects.equals(category, budget.category);
+    }
+
+    /**
+     * Returns hash code based on category.
+     * @return hash code
+     */
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(category);
+    }
 }
