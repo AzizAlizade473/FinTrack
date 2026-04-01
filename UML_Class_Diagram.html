@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinTrack - UML Class Diagram</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #ffffff;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px;
+        }
+        h1 {
+            font-size: 28px;
+            color: #1a1a2e;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        .subtitle {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .legend {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 20px;
+            padding: 12px 24px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-line {
+            width: 40px;
+            height: 3px;
+        }
+        .legend-line.inheritance { border-top: 3px solid #333; }
+        .legend-line.implements { border-top: 3px dashed #333; }
+        .legend-line.composition {
+            border-top: 3px solid #333;
+            position: relative;
+        }
+        .legend-line.dependency {
+            border-top: 3px dotted #666;
+        }
+        #diagram-container {
+            width: 100%;
+            max-width: 1800px;
+            overflow: auto;
+        }
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+        .print-instructions {
+            margin-top: 20px;
+            padding: 12px 20px;
+            background: #e8f5e9;
+            border: 1px solid #a5d6a7;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #2e7d32;
+        }
+    </style>
+</head>
+<body>
+    <h1>📊 FinTrack — UML Class Diagram</h1>
+    <p class="subtitle">Personal Finance Tracker | Object-Oriented Programming Project</p>
+
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-line inheritance"></div>
+            <span>Inheritance (extends)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-line implements"></div>
+            <span>Implements (interface)</span>
+        </div>
+        <div class="legend-item">
+            <span>◆───→</span>
+            <span>Composition</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-line dependency"></div>
+            <span>Dependency (uses)</span>
+        </div>
+    </div>
+
+    <div id="diagram-container">
+        <pre class="mermaid">
+classDiagram
+    direction TB
+
+    %% ============ INTERFACES ============
+    class Trackable {
+        &lt;&lt;interface&gt;&gt;
+        +track() String
+        +getSummary() String
+    }
+
+    class Categorizable {
+        &lt;&lt;interface&gt;&gt;
+        +getCategory() String
+        +setCategory(category String) void
+    }
+
+    class Exportable {
+        &lt;&lt;interface&gt;&gt;
+        +exportToFile(filename String) void
+    }
+
+    class FinanceObserver {
+        &lt;&lt;interface&gt;&gt;
+        +onBudgetExceeded(budget Budget) void
+    }
+
+    %% ============ ABSTRACT CLASSES ============
+    class Transaction {
+        &lt;&lt;abstract&gt;&gt;
+        -id : String
+        -amount : double
+        -date : String
+        -description : String
+        +Transaction(id, amount, date, description)
+        +getType() String*
+        +toJson() String*
+        +getId() String
+        +setId(id String) void
+        +getAmount() double
+        +setAmount(amount double) void
+        +getDate() String
+        +setDate(date String) void
+        +getDescription() String
+        +setDescription(description String) void
+        +toString() String
+        +equals(o Object) boolean
+        +hashCode() int
+    }
+
+    class Report {
+        &lt;&lt;abstract&gt;&gt;
+        -title : String
+        -generatedDate : String
+        +Report(title, generatedDate)
+        +generate() String*
+        +getTitle() String
+        +getGeneratedDate() String
+    }
+
+    %% ============ MODEL CLASSES ============
+    class Income {
+        -source : String
+        -category : String
+        +Income(id, amount, date, description, source, category)
+        +getType() String
+        +getSource() String
+        +setSource(source String) void
+        +getCategory() String
+        +setCategory(category String) void
+        +track() String
+        +toJson() String
+        +getSummary() String
+    }
+
+    class Expense {
+        -category : String
+        +Expense(id, amount, date, description, category)
+        +getType() String
+        +getCategory() String
+        +setCategory(category String) void
+        +track() String
+        +toJson() String
+        +getSummary() String
+    }
+
+    class Budget {
+        -category : String
+        -limit : double
+        -spent : double
+        +Budget(category, limit)
+        +addSpending(amount double) void
+        +isExceeded() boolean
+        +getRemainingBudget() double
+        +getCategory() String
+        +setCategory(category String) void
+        +getLimit() double
+        +setLimit(limit double) void
+        +getSpent() double
+        +setSpent(spent double) void
+        +track() String
+        +toJson() String
+        +getSummary() String
+        +equals(o Object) boolean
+        +hashCode() int
+    }
+
+    class User {
+        -userId : String
+        -name : String
+        -email : String
+        -password : String
+        -transactions : List~Transaction~
+        +User(userId, name, email, password)
+        +getUserId() String
+        +setUserId(userId String) void
+        +getName() String
+        +setName(name String) void
+        +getEmail() String
+        +setEmail(email String) void
+        +getPassword() String
+        +setPassword(password String) void
+        +getTransactions() List~Transaction~
+        +setTransactions(transactions List) void
+        +addTransaction(transaction Transaction) void
+        +removeTransaction(transactionId String) boolean
+        +equals(o Object) boolean
+        +hashCode() int
+        +toString() String
+    }
+
+    %% ============ REPORT CLASSES ============
+    class CategoryReport {
+        -transactions : List~Transaction~
+        +CategoryReport(transactions List)
+        +generate() String
+        +getCategoryBreakdown() Map
+        +exportToFile(filename String) void
+    }
+
+    class MonthlySummaryReport {
+        -transactions : List~Transaction~
+        -month : String
+        +MonthlySummaryReport(month, transactions)
+        +generate() String
+        +getTotalIncome() double
+        +getTotalExpense() double
+        +exportToFile(filename String) void
+    }
+
+    %% ============ PATTERN CLASSES (Observer) ============
+    class FinanceManager {
+        -observers : List~FinanceObserver~
+        -budgets : List~Budget~
+        +FinanceManager()
+        +addObserver(observer FinanceObserver) void
+        +removeObserver(observer FinanceObserver) void
+        +notifyObservers(budget Budget) void
+        +getBudgets() List~Budget~
+        +setBudget(category, limit) Budget
+        +getBudgetByCategory(category) Budget
+        +addSpendingToCategory(category, amount) void
+    }
+
+    class BudgetAlertObserver {
+        -alerts : List~String~
+        +BudgetAlertObserver()
+        +onBudgetExceeded(budget Budget) void
+        +getAlerts() List~String~
+        +clearAlerts() void
+    }
+
+    %% ============ STORAGE ============
+    class FileStorage {
+        +saveTransactions(transactions List, filename String) void
+        +loadTransactions(filename String) List~Transaction~
+        +saveUsers(users List, filename String) void
+        +loadUsers(filename String) List~User~
+        +saveBudgets(budgets List, filename String) void
+        +loadBudgets(filename String) List~Budget~
+        -escapeCSV(value String) String
+        -unescapeCSV(value String) String
+    }
+
+    %% ============ SERVICE & SERVER ============
+    class FinanceService {
+        -users : List~User~
+        -financeManager : FinanceManager
+        -alertObserver : BudgetAlertObserver
+        -fileStorage : FileStorage
+        -currentUser : User
+        +FinanceService()
+        +initializeData() void
+        +registerUser(name, email, password) boolean
+        +loginUser(email, password) String
+        +addIncome(description, amount, date, category, source) void
+        +addExpense(description, amount, date, category) void
+        +deleteTransaction(id) void
+        +getBalance() double
+        +getTotalIncome() double
+        +getTotalExpense() double
+        +getTransactionsJson() String
+        +getBudgetsJson() String
+        +getAlertsJson() String
+        +setBudget(category, limit) void
+        +getMonthlyReportJson(month) String
+        +getCategoryReportJson() String
+        +exportTransactionsToCSV() String
+        +getSmartInsightsJson() String
+    }
+
+    class FinanceServer {
+        -financeService : FinanceService
+        -port : int
+        +FinanceServer(financeService, port)
+        +start() void
+        -addCors(e HttpExchange) void
+        -preflight(e HttpExchange) boolean
+        -json(e, code, body) void
+        -handleHealth(e) void
+        -handleRegister(e) void
+        -handleLogin(e) void
+        -handleBalance(e) void
+        -handleAlerts(e) void
+        -handleBudgets(e) void
+        -handleTransactions(e) void
+        -handleAddIncome(e) void
+        -handleAddExpense(e) void
+        -handleMonthlyReport(e) void
+        -handleCategoryReport(e) void
+        -handleExportCsv(e) void
+        -handleInsights(e) void
+    }
+
+    class Main {
+        +main(args String[])$ void
+    }
+
+    %% ============ RELATIONSHIPS ============
+
+    %% Inheritance (extends)
+    Transaction <|-- Income : extends
+    Transaction <|-- Expense : extends
+    Report <|-- CategoryReport : extends
+    Report <|-- MonthlySummaryReport : extends
+
+    %% Interface Implementation
+    Trackable <|.. Income : implements
+    Trackable <|.. Expense : implements
+    Trackable <|.. Budget : implements
+    Categorizable <|.. Income : implements
+    Categorizable <|.. Expense : implements
+    Exportable <|.. CategoryReport : implements
+    Exportable <|.. MonthlySummaryReport : implements
+    FinanceObserver <|.. BudgetAlertObserver : implements
+
+    %% Composition (User owns Transactions)
+    User *-- "0..*" Transaction : composition
+
+    %% Observer Pattern
+    FinanceManager o-- "0..*" FinanceObserver : observers
+    FinanceManager o-- "0..*" Budget : manages
+
+    %% Dependencies
+    FinanceService --> User : uses
+    FinanceService --> FinanceManager : uses
+    FinanceService --> BudgetAlertObserver : uses
+    FinanceService --> FileStorage : uses
+    FinanceServer --> FinanceService : uses
+    Main --> FinanceService : creates
+    Main --> FinanceServer : creates
+    CategoryReport --> Transaction : analyzes
+    MonthlySummaryReport --> Transaction : analyzes
+        </pre>
+    </div>
+
+    <div class="print-instructions">
+        💡 <strong>To save as image:</strong> Right-click the diagram → "Save image as..." or use Ctrl+P → "Save as PDF". You can also take a screenshot.
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            themeVariables: {
+                fontSize: '12px',
+                classText: '#1a1a2e'
+            },
+            class: {
+                defaultRenderer: 'dagre-wrapper',
+                htmlLabels: true
+            },
+            securityLevel: 'loose',
+            maxTextSize: 200000
+        });
+    </script>
+</body>
+</html>
