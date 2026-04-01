@@ -12,69 +12,38 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Core service class that orchestrates all finance tracking operations.
- * Holds references to the current User and the FinanceManager.
- */
 public class FinanceService {
-    /** The currently active user */
     private User currentUser;
-    /** List of all registered users */
     private List<User> users;
-    /** Finance manager for budgets and observer pattern */
     private FinanceManager financeManager;
-    /** Observer for budget alerts */
     private BudgetAlertObserver alertObserver;
-    /** File storage for CSV persistence */
     private FileStorage fileStorage;
 
-    // File paths for data persistence
     private static final String TRANSACTIONS_FILE = "data/transactions.csv";
     private static final String USERS_FILE = "data/users.csv";
     private static final String BUDGETS_FILE = "data/budgets.csv";
 
-    /**
-     * Constructs a new FinanceService and initializes all components.
-     */
     public FinanceService() {
         this.users = new ArrayList<>();
         this.financeManager = new FinanceManager();
         this.alertObserver = new BudgetAlertObserver();
         this.fileStorage = new FileStorage();
-
-        // Register the alert observer with the finance manager (Observer Pattern)
         this.financeManager.addObserver(alertObserver);
     }
 
-    // ====================== USER MANAGEMENT ======================
-
-    /**
-     * Registers a new user.
-     * @param name the user's name
-     * @param email the user's email
-     * @param password the user's password
-     * @return the created User, or null if email already exists
-     */
     public boolean registerUser(String name, String email, String password) {
-        // Check if email already exists
         for (User u : users) {
             if (u.getEmail().equalsIgnoreCase(email)) {
-                return false; // Email already registered
+                return false;
             }
         }
         String userId = UUID.randomUUID().toString().substring(0, 8);
         User newUser = new User(userId, name, email, password);
         users.add(newUser);
-        saveData(); // Persist new user
+        saveData();
         return true;
     }
 
-    /**
-     * Authenticates a user by email and password.
-     * @param email the email to authenticate
-     * @param password the password to verify
-     * @return the authenticated User, or null if credentials are invalid
-     */
     public String loginUser(String email, String password) {
         for (User u : users) {
             if (u.getEmail().equalsIgnoreCase(email) && u.getPassword().equals(password)) {
@@ -89,10 +58,6 @@ public class FinanceService {
         return null;
     }
 
-    /**
-     * Sets the current active user by userId.
-     * @param userId the user ID to set as current
-     */
     public void setCurrentUser(String userId) {
         for (User u : users) {
             if (u.getUserId().equals(userId)) {
@@ -102,64 +67,31 @@ public class FinanceService {
         }
     }
 
-    /** @return the currently active user */
-    public User getCurrentUser() {
-        return currentUser;
-    }
+    public User getCurrentUser() { return currentUser; }
+    public List<User> getUsers() { return users; }
 
-    /** @return all registered users */
-    public List<User> getUsers() {
-        return users;
-    }
-
-    // ====================== TRANSACTION MANAGEMENT ======================
-
-    /**
-     * Adds an income transaction to the current user.
-     * @param description description of the income
-     * @param amount the income amount
-     * @param date the date (YYYY-MM-DD)
-     * @param category the income category
-     * @param source the income source
-     * @return the created Income transaction
-     */
     public Income addIncome(String description, double amount, String date, String category, String source) {
         String id = UUID.randomUUID().toString().substring(0, 8);
         Income income = new Income(id, amount, date, description, source, category);
         if (currentUser != null) {
-            currentUser.addTransaction(income); // Composition in action
+            currentUser.addTransaction(income);
         }
         financeManager.addSpendingToCategory(category, -amount);
         saveData();
         return income;
     }
 
-    /**
-     * Adds an expense transaction to the current user.
-     * Also updates budget spending and triggers observer notifications if exceeded.
-     * @param description description of the expense
-     * @param amount the expense amount
-     * @param date the date (YYYY-MM-DD)
-     * @param category the expense category
-     * @return the created Expense transaction
-     */
     public Expense addExpense(String description, double amount, String date, String category) {
         String id = UUID.randomUUID().toString().substring(0, 8);
         Expense expense = new Expense(id, amount, date, description, category);
         if (currentUser != null) {
-            currentUser.addTransaction(expense); // Composition in action
+            currentUser.addTransaction(expense);
         }
-        // Update budget spending and potentially trigger alert (Observer Pattern)
         financeManager.addSpendingToCategory(category, amount);
         saveData();
         return expense;
     }
 
-    /**
-     * Deletes a transaction by ID from the current user.
-     * @param transactionId the ID of the transaction to delete
-     * @return true if the transaction was found and deleted
-     */
     public boolean deleteTransaction(String transactionId) {
         if (currentUser != null) {
             boolean removed = currentUser.removeTransaction(transactionId);
@@ -171,10 +103,6 @@ public class FinanceService {
         return false;
     }
 
-    /**
-     * Gets all transactions for the current user.
-     * @return list of transactions
-     */
     public List<Transaction> getAllTransactions() {
         if (currentUser != null) {
             return currentUser.getTransactions();
@@ -182,34 +110,17 @@ public class FinanceService {
         return new ArrayList<>();
     }
 
-    // ====================== BUDGET MANAGEMENT ======================
-
-    /**
-     * Sets or updates a budget for a category.
-     * @param category the budget category
-     * @param limit the spending limit
-     * @return the created/updated Budget
-     */
     public Budget setBudget(String category, double limit) {
         Budget budget = financeManager.setBudget(category, limit);
-        // Recalculate spending from current transactions
         recalculateBudgetSpending(budget);
         saveData();
         return budget;
     }
 
-    /**
-     * Gets all budgets.
-     * @return list of all budgets
-     */
     public List<Budget> getAllBudgets() {
         return financeManager.getBudgets();
     }
 
-    /**
-     * Recalculates the spent amount for a budget based on current transactions.
-     * @param budget the budget to recalculate
-     */
     private void recalculateBudgetSpending(Budget budget) {
         double totalSpent = 0;
         if (currentUser != null) {
@@ -227,37 +138,19 @@ public class FinanceService {
             }
         }
         budget.setSpent(totalSpent);
-        // Check if exceeded after recalculation
         if (budget.isExceeded()) {
             financeManager.notifyObservers(budget);
         }
     }
 
-    // ====================== REPORT GENERATION ======================
-
-    /**
-     * Generates a monthly summary report for the given month.
-     * @param month the month (YYYY-MM format)
-     * @return the generated MonthlySummaryReport
-     */
     public MonthlySummaryReport generateMonthlyReport(String month) {
         return new MonthlySummaryReport(month, getAllTransactions());
     }
 
-    /**
-     * Generates a category breakdown report.
-     * @return the generated CategoryReport
-     */
     public CategoryReport generateCategoryReport() {
         return new CategoryReport(getAllTransactions());
     }
 
-    // ====================== BALANCE ======================
-
-    /**
-     * Calculates the current balance (total income - total expenses).
-     * @return the current balance
-     */
     public double getBalance() {
         return getTotalIncome() - getTotalExpense();
     }
@@ -282,23 +175,11 @@ public class FinanceService {
         return total;
     }
 
-    // ====================== ALERTS ======================
-
-    /**
-     * Gets all budget-exceeded alert messages from the observer.
-     * @return list of alert strings
-     */
     public List<String> getAlerts() {
         return alertObserver.getAlerts();
     }
 
-    // ====================== DATA PERSISTENCE ======================
-
-    /**
-     * Saves all data (users, transactions, budgets) to CSV files.
-     */
     public void saveData() {
-        // Ensure data directory exists
         new java.io.File("data").mkdirs();
         fileStorage.saveUsers(users, USERS_FILE);
         if (currentUser != null) {
@@ -307,14 +188,9 @@ public class FinanceService {
         fileStorage.saveBudgets(financeManager.getBudgets(), BUDGETS_FILE);
     }
 
-    /**
-     * Loads all data (users, transactions, budgets) from CSV files.
-     */
     public void loadData() {
-        // Load users
         users = fileStorage.loadUsers(USERS_FILE);
 
-        // Load budgets
         List<Budget> loadedBudgets = fileStorage.loadBudgets(BUDGETS_FILE);
         for (Budget b : loadedBudgets) {
             financeManager.setBudget(b.getCategory(), b.getLimit());
@@ -324,7 +200,6 @@ public class FinanceService {
             }
         }
 
-        // Load transactions and assign to first user if exists
         List<Transaction> loadedTransactions = fileStorage.loadTransactions(TRANSACTIONS_FILE);
         if (!users.isEmpty()) {
             currentUser = users.get(0);
@@ -332,12 +207,7 @@ public class FinanceService {
         }
     }
 
-    /**
-     * Initializes data. Loads saved data if exists, otherwise sets up a clean slate
-     * with an empty demo user.
-     */
     public void initializeData() {
-        // Check if data files exist
         java.io.File usersFile = new java.io.File(USERS_FILE);
         if (usersFile.exists()) {
             loadData();
@@ -346,16 +216,11 @@ public class FinanceService {
         }
 
         System.out.println("No saved data found. Initializing clean slate.");
-        // Create demo user so login works right away, but NO records are added
         User demoUser = new User("demo001", "Demo User", "demo@finance.com", "demo123");
         users.add(demoUser);
         currentUser = demoUser;
-
-        // Save immediately to establish file structure
         saveData();
     }
-
-    // ====================== JSON HELPERS FOR SERVER ======================
 
     public String getAlertsJson() {
         List<String> alerts = getAlerts();

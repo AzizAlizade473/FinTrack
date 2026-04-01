@@ -12,31 +12,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Generates a report breaking down spending by category.
- * Extends Report and implements Exportable for file output.
- */
 public class CategoryReport extends Report implements Exportable {
-    /** List of transactions to analyze */
     private List<Transaction> transactions;
 
-    /**
-     * Constructs a CategoryReport.
-     * @param transactions the list of transactions to analyze
-     */
     public CategoryReport(List<Transaction> transactions) {
         super("Category Breakdown Report", java.time.LocalDate.now().toString());
         this.transactions = transactions;
     }
 
-    /**
-     * Generates the category breakdown report content.
-     * Shows spending per category and percentage of total.
-     * @return formatted report string
-     */
     @Override
     public String generate() {
-        // Build a map of category -> total spending
         Map<String, Double> categoryMap = getCategoryBreakdown();
 
         double totalSpending = 0;
@@ -44,7 +29,6 @@ public class CategoryReport extends Report implements Exportable {
             totalSpending += val;
         }
 
-        // Build formatted report string
         StringBuilder sb = new StringBuilder();
         sb.append("========================================\n");
         sb.append("  ").append(getTitle()).append("\n");
@@ -65,10 +49,6 @@ public class CategoryReport extends Report implements Exportable {
         return sb.toString();
     }
 
-    /**
-     * Gets a map of category name -> total amount spent.
-     * @return the category breakdown map
-     */
     public Map<String, Double> getCategoryBreakdown() {
         Map<String, Double> categoryMap = new LinkedHashMap<>();
         for (Transaction t : transactions) {
@@ -81,10 +61,6 @@ public class CategoryReport extends Report implements Exportable {
         return categoryMap;
     }
 
-    /**
-     * Exports the report to a text file using BufferedWriter.
-     * @param filename the file to write the report to
-     */
     @Override
     public void exportToFile(String filename) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {

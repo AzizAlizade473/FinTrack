@@ -72,17 +72,14 @@ public class FinanceServer {
         if (i == -1) return "";
         int colon = json.indexOf(":", i);
         if (colon == -1) return "";
-        // Skip whitespace after colon
         int pos = colon + 1;
         while (pos < json.length() && json.charAt(pos) == ' ') pos++;
         if (pos >= json.length()) return "";
-        // Check if value is quoted string or unquoted (number/boolean)
         if (json.charAt(pos) == '"') {
             int quote2 = json.indexOf("\"", pos + 1);
             if (quote2 == -1) return "";
             return json.substring(pos + 1, quote2);
         } else {
-            // Unquoted value (number, boolean, null)
             int end = pos;
             while (end < json.length() && json.charAt(end) != ',' && json.charAt(end) != '}' && json.charAt(end) != ']') {
                 end++;
@@ -90,8 +87,6 @@ public class FinanceServer {
             return json.substring(pos, end).trim();
         }
     }
-
-    // ============ HANDLERS ============
 
     private void handleHealth(HttpExchange e) throws IOException {
         if (preflight(e)) return;
@@ -145,7 +140,7 @@ public class FinanceServer {
             String category = extract(b, "category");
             String limitStr = extract(b, "limit");
             double limit = 0;
-            try { limit = Double.parseDouble(limitStr); } catch (Exception ex) { /* default 0 */ }
+            try { limit = Double.parseDouble(limitStr); } catch (Exception ex) { }
             financeService.setBudget(category, limit);
             json(e, 200, "{\"status\":\"success\"}");
         }
@@ -168,7 +163,7 @@ public class FinanceServer {
         if (!e.getRequestMethod().equalsIgnoreCase("POST")) { json(e, 405, "{\"error\":\"method not allowed\"}"); return; }
         String b = body(e);
         double amount = 0;
-        try { amount = Double.parseDouble(extract(b, "amount")); } catch (Exception ex) { /* default 0 */ }
+        try { amount = Double.parseDouble(extract(b, "amount")); } catch (Exception ex) { }
         financeService.addIncome(
             extract(b, "description"),
             amount,
@@ -184,7 +179,7 @@ public class FinanceServer {
         if (!e.getRequestMethod().equalsIgnoreCase("POST")) { json(e, 405, "{\"error\":\"method not allowed\"}"); return; }
         String b = body(e);
         double amount = 0;
-        try { amount = Double.parseDouble(extract(b, "amount")); } catch (Exception ex) { /* default 0 */ }
+        try { amount = Double.parseDouble(extract(b, "amount")); } catch (Exception ex) { }
         financeService.addExpense(
             extract(b, "description"),
             amount,
