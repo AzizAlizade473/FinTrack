@@ -5,6 +5,7 @@ import PageHeader from '../components/PageHeader.jsx';
 import StatCard from '../components/StatCard.jsx';
 import BudgetCard from '../components/BudgetCard.jsx';
 import LoadingSkeleton from '../components/LoadingSkeleton.jsx';
+import Modal from '../components/Modal.jsx';
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Link } from 'react-router-dom';
 
@@ -28,6 +29,7 @@ export default function DashboardPage() {
   const [budgets, setBudgets] = useState([]);
   const [alerts, setAlerts] = useState([]);
   const [insights, setInsights] = useState([]);
+  const [modalData, setModalData] = useState({ isOpen: false, type: '', title: '' });
 
   useEffect(() => {
     const load = async () => {
@@ -118,10 +120,10 @@ export default function DashboardPage() {
 
       {/* Row 1: Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Total Balance" value={balance} type="balance" />
-        <StatCard title="Total Income" value={totalIncome} type="income" badgePrefix="+" />
-        <StatCard title="Total Expenses" value={totalExpense} type="expense" badgePrefix="-" />
-        <StatCard title="Active Budgets" value={budgets.length} type="budgets" isCurrency={false} />
+        <StatCard title="Total Balance" value={balance} type="balance" onClick={() => setModalData({ isOpen: true, type: 'balance', title: 'Total Balance Details' })} />
+        <StatCard title="Total Income" value={totalIncome} type="income" badgePrefix="+" onClick={() => setModalData({ isOpen: true, type: 'income', title: 'Income Details' })} />
+        <StatCard title="Total Expenses" value={totalExpense} type="expense" badgePrefix="-" onClick={() => setModalData({ isOpen: true, type: 'expense', title: 'Expense Details' })} />
+        <StatCard title="Active Budgets" value={budgets.length} type="budgets" isCurrency={false} onClick={() => setModalData({ isOpen: true, type: 'budgets', title: 'Active Budgets' })} />
       </div>
 
       {/* Row 2: Charts */}
@@ -237,6 +239,56 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      <Modal isOpen={modalData.isOpen} onClose={() => setModalData({ ...modalData, isOpen: false })} title={modalData.title}>
+        {modalData.type === 'balance' && (
+           <p className="text-[#6b7280]">Your current net balance is {balance >= 0 ? 'positive' : 'negative'}. It is calculated as Total Income minus Total Expenses.</p>
+        )}
+        {modalData.type === 'income' && (
+           <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+             {transactions.filter(t => t.type === 'INCOME').slice(0, 10).map(t => (
+               <div key={t.id} className="flex justify-between items-center py-2 border-b border-[#f3f4f6] last:border-0 hover:bg-hover px-2 rounded-lg transition-colors">
+                 <div>
+                   <p className="text-[14px] font-bold text-navy">{t.description}</p>
+                   <p className="text-[12px] text-[#9ca3af]">{t.date} • {t.source || t.category}</p>
+                 </div>
+                 <span className="text-green font-bold">+${t.amount.toFixed(2)}</span>
+               </div>
+             ))}
+             {transactions.filter(t => t.type === 'INCOME').length === 0 && <p className="text-[13px] text-secondary">No income records found.</p>}
+           </div>
+        )}
+        {modalData.type === 'expense' && (
+           <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+             {transactions.filter(t => t.type === 'EXPENSE').slice(0, 10).map(t => (
+               <div key={t.id} className="flex justify-between items-center py-2 border-b border-[#f3f4f6] last:border-0 hover:bg-hover px-2 rounded-lg transition-colors">
+                 <div>
+                   <p className="text-[14px] font-bold text-navy">{t.description}</p>
+                   <p className="text-[12px] text-[#9ca3af]">{t.date} • {t.category}</p>
+                 </div>
+                 <span className="text-red font-bold">-${t.amount.toFixed(2)}</span>
+               </div>
+             ))}
+             {transactions.filter(t => t.type === 'EXPENSE').length === 0 && <p className="text-[13px] text-secondary">No expense records found.</p>}
+           </div>
+        )}
+        {modalData.type === 'budgets' && (
+           <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+             {budgets.map(b => (
+                <div key={b.category} className="bg-[#f8fafc] rounded-lg p-3 border border-border">
+                  <div className="flex justify-between mb-1">
+                    <span className="text-[13px] font-bold text-navy">{b.category}</span>
+                    <span className="text-[13px] text-[#6b7280]">${b.spent || 0} / ${b.limit}</span>
+                  </div>
+                  <div className="w-full h-[6px] bg-[#e2e8f0] rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full transition-all duration-700 w-0 ${b.spent > b.limit ? 'bg-red' : 'bg-purple'}`} style={{ width: `${Math.min(((b.spent || 0) / (b.limit || 1)) * 100, 100)}%` }} />
+                  </div>
+                </div>
+             ))}
+             {budgets.length === 0 && <p className="text-[13px] text-secondary">No active budgets found.</p>}
+           </div>
+        )}
+      </Modal>
     </div>
   );
 }

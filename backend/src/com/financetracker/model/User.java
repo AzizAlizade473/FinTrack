@@ -11,6 +11,7 @@ public class User {
     private String email;
     private String password;
     private List<Transaction> transactions;
+    private List<Budget> budgets;
 
     public User(String userId, String name, String email, String password) {
         this.userId = userId;
@@ -18,6 +19,7 @@ public class User {
         this.email = email;
         this.password = password;
         this.transactions = new ArrayList<>();
+        this.budgets = new ArrayList<>();
     }
 
     public String getUserId() { return userId; }
@@ -39,6 +41,26 @@ public class User {
         return this.transactions.removeIf(t -> t.getId().equals(transactionId));
     }
 
+    public List<Budget> getBudgets() { return budgets; }
+    public void setBudgets(List<Budget> budgets) { this.budgets = budgets; }
+
+    public void addBudget(Budget budget) {
+        this.budgets.add(budget);
+    }
+
+    public Budget getBudgetByCategory(String category) {
+        for (Budget b : budgets) {
+            if (b.getCategory().equalsIgnoreCase(category)) {
+                return b;
+            }
+        }
+        return null;
+    }
+
+    public boolean removeBudget(String category) {
+        return this.budgets.removeIf(b -> b.getCategory().equalsIgnoreCase(category));
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -54,6 +76,7 @@ public class User {
 
     @Override
     public String toString() {
-        return "User [id=" + userId + ", name=" + name + ", email=" + email + ", transactions=" + transactions.size() + "]";
+        return "User [id=" + userId + ", name=" + name + ", email=" + email + ", transactions=" + transactions.size() + ", budgets=" + budgets.size() + "]";
     }
 }
+

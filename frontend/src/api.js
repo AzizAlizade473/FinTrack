@@ -8,6 +8,21 @@ const API = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+API.interceptors.request.use((config) => {
+  const userStr = localStorage.getItem('user');
+  if (userStr) {
+    try {
+      const user = JSON.parse(userStr);
+      if (user.userId) {
+        config.headers['X-User-Id'] = user.userId;
+      }
+    } catch (e) {
+      console.error('Error parsing user from localStorage', e);
+    }
+  }
+  return config;
+});
+
 // ============ AUTH ============
 export const registerUser = async (name, email, password) => {
   try {
@@ -108,6 +123,15 @@ export const setBudget = async (category, limit) => {
     return await API.post('/budgets', { category, limit });
   } catch (err) {
     console.error("setBudget error:", err);
+    throw err;
+  }
+};
+
+export const deleteBudget = async (category) => {
+  try {
+    return await API.delete(`/budgets/${encodeURIComponent(category)}`);
+  } catch (err) {
+    console.error("deleteBudget error:", err);
     throw err;
   }
 };

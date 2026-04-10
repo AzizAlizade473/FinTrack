@@ -12,61 +12,65 @@ import java.util.List;
 
 public class FileStorage {
 
-    public void saveTransactions(List<Transaction> transactions, String filename) {
+    public void saveTransactions(List<User> users, String filename) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
-            writer.write("type,id,amount,date,description,category,source");
+            writer.write("userId,type,id,amount,date,description,category,source");
             writer.newLine();
-            for (Transaction t : transactions) {
-                String type = t.getType();
-                String category = "";
-                String source = "";
-                if (t instanceof Income) {
-                    Income inc = (Income) t;
-                    category = inc.getCategory();
-                    source = inc.getSource();
-                } else if (t instanceof Expense) {
-                    Expense exp = (Expense) t;
-                    category = exp.getCategory();
+            for (User user : users) {
+                for (Transaction t : user.getTransactions()) {
+                    String type = t.getType();
+                    String category = "";
+                    String source = "";
+                    if (t instanceof Income) {
+                        Income inc = (Income) t;
+                        category = inc.getCategory();
+                        source = inc.getSource();
+                    } else if (t instanceof Expense) {
+                        Expense exp = (Expense) t;
+                        category = exp.getCategory();
+                    }
+                    writer.write(user.getUserId() + "," + type + "," + t.getId() + "," + t.getAmount() + ","
+                            + t.getDate() + "," + escapeCSV(t.getDescription()) + ","
+                            + escapeCSV(category) + "," + escapeCSV(source));
+                    writer.newLine();
                 }
-                writer.write(type + "," + t.getId() + "," + t.getAmount() + ","
-                        + t.getDate() + "," + escapeCSV(t.getDescription()) + ","
-                        + escapeCSV(category) + "," + escapeCSV(source));
-                writer.newLine();
             }
         } catch (IOException e) {
             System.err.println("Error saving transactions: " + e.getMessage());
         }
     }
 
-    public List<Transaction> loadTransactions(String filename) {
-        List<Transaction> transactions = new ArrayList<>();
+    public void loadTransactionsIntoUsers(List<User> users, String filename) {
         File file = new File(filename);
-        if (!file.exists()) return transactions;
+        if (!file.exists()) return;
         try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
             String line = reader.readLine();
             while ((line = reader.readLine()) != null) {
                 if (line.trim().isEmpty()) continue;
                 String[] parts = line.split(",", -1);
-                if (parts.length >= 6) {
-                    String type = parts[0].trim();
-                    String id = parts[1].trim();
-                    double amount = Double.parseDouble(parts[2].trim());
-                    String date = parts[3].trim();
-                    String description = unescapeCSV(parts[4].trim());
-                    String category = unescapeCSV(parts[5].trim());
-                    String source = parts.length > 6 ? unescapeCSV(parts[6].trim()) : "";
+                if (parts.length >= 7) {
+                    String userId = parts[0].trim();
+                    String type = parts[1].trim();
+                    String id = parts[2].trim();
+                    double amount = Double.parseDouble(parts[3].trim());
+                    String date = parts[4].trim();
+                    String description = unescapeCSV(parts[5].trim());
+                    String category = unescapeCSV(parts[6].trim());
+                    String source = parts.length > 7 ? unescapeCSV(parts[7].trim()) : "";
 
-                    if ("INCOME".equals(type)) {
-                        transactions.add(new Income(id, amount, date, description, source, category));
-                    } else if ("EXPENSE".equals(type)) {
-                        transactions.add(new Expense(id, amount, date, description, category));
+                    User user = findUser(users, userId);
+                    if (user != null) {
+                        if ("INCOME".equals(type)) {
+                            user.getTransactions().add(new Income(id, amount, date, description, source, category));
+                        } else if ("EXPENSE".equals(type)) {
+                            user.getTransactions().add(new Expense(id, amount, date, description, category));
+                        }
                     }
                 }
             }
         } catch (IOException e) {
             System.err.println("Error loading transactions: " + e.getMessage());
         }
-        return transactions;
     }
 
     public void saveUsers(List<User> users, String filename) {
@@ -106,41 +110,53 @@ public class FileStorage {
         return users;
     }
 
-    public void saveBudgets(List<Budget> budgets, String filename) {
+    public void saveBudgets(List<User> users, String filename) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
-            writer.write("category,limit,spent");
+            writer.write("userId,category,limit,spent");
             writer.newLine();
-            for (Budget b : budgets) {
-                writer.write(escapeCSV(b.getCategory()) + "," + b.getLimit() + "," + b.getSpent());
-                writer.newLine();
+            for (User user : users) {
+                for (Budget b : user.getBudgets()) {
+                    writer.write(user.getUserId() + "," + escapeCSV(b.getCategory()) + "," + b.getLimit() + "," + b.getSpent());
+                    writer.newLine();
+                }
             }
         } catch (IOException e) {
             System.err.println("Error saving budgets: " + e.getMessage());
         }
     }
 
-    public List<Budget> loadBudgets(String filename) {
-        List<Budget> budgets = new ArrayList<>();
+    public void loadBudgetsIntoUsers(List<User> users, String filename) {
         File file = new File(filename);
-        if (!file.exists()) return budgets;
+        if (!file.exists()) return;
         try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
             String line = reader.readLine();
             while ((line = reader.readLine()) != null) {
                 if (line.trim().isEmpty()) continue;
                 String[] parts = line.split(",", -1);
-                if (parts.length >= 3) {
-                    String category = unescapeCSV(parts[0].trim());
-                    double limit = Double.parseDouble(parts[1].trim());
-                    double spent = Double.parseDouble(parts[2].trim());
-                    Budget b = new Budget(category, limit);
-                    b.setSpent(spent);
-                    budgets.add(b);
+                if (parts.length >= 4) {
+                    String userId = parts[0].trim();
+                    String category = unescapeCSV(parts[1].trim());
+                    double limit = Double.parseDouble(parts[2].trim());
+                    double spent = Double.parseDouble(parts[3].trim());
+                    
+                    User user = findUser(users, userId);
+                    if (user != null) {
+                        Budget b = new Budget(category, limit);
+                        b.setSpent(spent);
+                        user.addBudget(b);
+                    }
                 }
             }
         } catch (IOException e) {
             System.err.println("Error loading budgets: " + e.getMessage());
         }
-        return budgets;
+    }
+
+    private User findUser(List<User> users, String userId) {
+        for (User u : users) {
+             if (u.getUserId().equals(userId)) return u;
+        }
+        return null;
     }
 
     private String escapeCSV(String value) {
@@ -153,3 +169,4 @@ public class FileStorage {
         return value.replace(";", ",");
     }
 }
+

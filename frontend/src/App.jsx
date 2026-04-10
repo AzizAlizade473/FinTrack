@@ -34,6 +34,7 @@ function PageWrapper({ children }) {
 
 function AppLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, logout } = useContext(AuthContext);
 
   return (
     <div className="flex min-h-screen bg-bg-page font-sans text-navy">
@@ -48,17 +49,45 @@ function AppLayout({ children }) {
       )}
 
       <div className="flex-1 flex flex-col md:ml-[240px] min-w-0 transition-all duration-300">
+        <header className="flex justify-between items-center bg-white/50 backdrop-blur-sm border-b border-border sticky top-0 z-20 px-6 py-4">
+          <div className="flex items-center">
+            {/* Mobile hamburger button */}
+            <button 
+              className="md:hidden p-2 -ml-2 mr-2 text-secondary rounded-lg hover:bg-hover active:scale-95 transition-all"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <h2 className="text-xl font-bold text-navy hidden md:block">FinTrack</h2>
+          </div>
+
+          <div className="relative">
+            <button 
+              onClick={() => document.getElementById('profile-dropdown').classList.toggle('hidden')}
+              className="w-10 h-10 rounded-full bg-purple/10 border border-purple/20 flex items-center justify-center cursor-pointer hover:bg-purple/20 transition-colors"
+            >
+              <span className="font-bold text-purple">{user?.name ? user.name.charAt(0).toUpperCase() : 'U'}</span>
+            </button>
+            
+            <div id="profile-dropdown" className="hidden absolute right-0 mt-2 w-48 bg-white rounded-[12px] shadow-lg border border-border overflow-hidden z-50">
+              <div className="px-4 py-3 border-b border-border bg-[#f8fafc]">
+                 <p className="text-[14px] font-bold text-navy truncate">{user?.name}</p>
+                 <p className="text-[12px] text-secondary truncate">{user?.email}</p>
+              </div>
+              <button 
+                onClick={logout}
+                className="w-full text-left px-4 py-2.5 text-[14px] font-medium text-red hover:bg-red/5 transition-colors flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                Log Out
+              </button>
+            </div>
+          </div>
+        </header>
+
         <main className="flex-1 p-6 lg:p-10 overflow-auto">
-          {/* Mobile hamburger button */}
-          <button 
-            className="md:hidden p-2 -ml-2 mb-4 text-secondary rounded-lg hover:bg-hover active:scale-95 transition-all"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-          
           <PageWrapper>
             {children}
           </PageWrapper>

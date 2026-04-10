@@ -21,7 +21,7 @@ function useCountUp(end, duration = 1000) {
   return count;
 }
 
-export default function StatCard({ title, value, type, isCurrency = true, badgePrefix = '' }) {
+export default function StatCard({ title, value, type, isCurrency = true, badgePrefix = '', onClick }) {
   const isBudget = type === 'budgets';
   const displayValue = useCountUp(value);
   
@@ -43,7 +43,10 @@ export default function StatCard({ title, value, type, isCurrency = true, badgeP
   }
 
   return (
-    <div className="bg-bg-card rounded-[16px] border border-border p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:-translate-y-1 hover:shadow-md transition-all duration-200 ease-in-out">
+    <div 
+        className={`bg-bg-card rounded-[16px] border border-border p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:-translate-y-1 hover:shadow-md transition-all duration-200 ease-in-out ${onClick ? 'cursor-pointer' : ''}`}
+        onClick={onClick}
+    >
       <div className="flex items-center justify-between mb-4">
         <span className="text-[12px] font-semibold text-[#6b7280] uppercase tracking-wider">{title}</span>
         <div className={`p-2 rounded-[10px] ${bgClass}`}>

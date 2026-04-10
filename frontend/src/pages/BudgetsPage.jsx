@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import { ToastContext } from '../App.jsx';
-import { getBudgets, setBudget, getAlerts } from '../api.js';
+import { getBudgets, setBudget, deleteBudget, getAlerts } from '../api.js';
 import PageHeader from '../components/PageHeader.jsx';
 import BudgetCard from '../components/BudgetCard.jsx';
 import Modal from '../components/Modal.jsx';
@@ -43,6 +43,15 @@ export default function BudgetsPage() {
     } catch { showToast('Failed to set budget', 'error'); }
   };
 
+  const handleDeleteBudget = async (catToDelete) => {
+    if (!confirm(`Delete budget for ${catToDelete}?`)) return;
+    try {
+      await deleteBudget(catToDelete);
+      showToast('Budget deleted successfully!', 'success');
+      fetchData();
+    } catch { showToast('Failed to delete budget', 'error'); }
+  };
+
   if (loading) return (
     <div className="space-y-6">
       <PageHeader title="Budgets" />
@@ -82,7 +91,7 @@ export default function BudgetsPage() {
       </button>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {budgets.map((b, i) => <BudgetCard key={i} budget={b} />)}
+        {budgets.map((b, i) => <BudgetCard key={i} budget={b} onDelete={handleDeleteBudget} />)}
       </div>
 
       {budgets.length === 0 && (

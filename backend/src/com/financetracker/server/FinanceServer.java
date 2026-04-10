@@ -88,6 +88,14 @@ public class FinanceServer {
         }
     }
 
+    private String getUserId(HttpExchange e) {
+        String userId = e.getRequestHeaders().getFirst("X-User-Id");
+        if (userId == null) {
+            userId = ""; // or throw exception? Better to just return empty and let service handle nulls cleanly, but service expects valid ID.
+        }
+        return userId;
+    }
+
     private void handleHealth(HttpExchange e) throws IOException {
         if (preflight(e)) return;
         json(e, 200, "{\"status\":\"ok\"}");
@@ -120,51 +128,64 @@ public class FinanceServer {
 
     private void handleBalance(HttpExchange e) throws IOException {
         if (preflight(e)) return;
-        double balance = financeService.getBalance();
-        double totalIncome = financeService.getTotalIncome();
-        double totalExpense = financeService.getTotalExpense();
+        String userId = getUserId(e);
+        double balance = financeService.getBalance(userId);
+        double totalIncome = financeService.getTotalIncome(userId);
+        double totalExpense = financeService.getTotalExpense(userId);
         json(e, 200, "{\"balance\":" + balance + ",\"totalIncome\":" + totalIncome + ",\"totalExpense\":" + totalExpense + "}");
     }
 
     private void handleAlerts(HttpExchange e) throws IOException {
         if (preflight(e)) return;
-        json(e, 200, financeService.getAlertsJson());
+        String userId = getUserId(e);
+        json(e, 200, financeService.getAlertsJson(userId));
     }
 
     private void handleBudgets(HttpExchange e) throws IOException {
         if (preflight(e)) return;
+        String userId = getUserId(e);
         if (e.getRequestMethod().equalsIgnoreCase("GET")) {
-            json(e, 200, financeService.getBudgetsJson());
+            json(e, 200, financeService.getBudgetsJson(userId));
         } else if (e.getRequestMethod().equalsIgnoreCase("POST")) {
             String b = body(e);
             String category = extract(b, "category");
             String limitStr = extract(b, "limit");
             double limit = 0;
             try { limit = Double.parseDouble(limitStr); } catch (Exception ex) { }
-            financeService.setBudget(category, limit);
+            financeService.setBudget(userId, category, limit);
+            json(e, 200, "{\"status\":\"success\"}");
+        } else if (e.getRequestMethod().equalsIgnoreCase("DELETE")) {
+            String path = e.getRequestURI().getPath();
+            String category = path.substring(path.lastIndexOf("/") + 1);
+            // decode URL if category has spaces (which it likely doesn't or does)
+            try { category = java.net.URLDecoder.decode(category, "UTF-8"); } catch(Exception ignored){}
+            financeService.deleteBudget(userId, category);
             json(e, 200, "{\"status\":\"success\"}");
         }
     }
 
     private void handleTransactions(HttpExchange e) throws IOException {
         if (preflight(e)) return;
+        String userId = getUserId(e);
         if (e.getRequestMethod().equalsIgnoreCase("GET")) {
-            json(e, 200, financeService.getTransactionsJson());
+            json(e, 200, financeService.getTransactionsJson(userId));
         } else if (e.getRequestMethod().equalsIgnoreCase("DELETE")) {
             String path = e.getRequestURI().getPath();
             String id = path.substring(path.lastIndexOf("/") + 1);
-            financeService.deleteTransaction(id);
+            financeService.deleteTransaction(userId, id);
             json(e, 200, "{\"status\":\"success\"}");
         }
     }
 
     private void handleAddIncome(HttpExchange e) throws IOException {
         if (preflight(e)) return;
+        String userId = getUserId(e);
         if (!e.getRequestMethod().equalsIgnoreCase("POST")) { json(e, 405, "{\"error\":\"method not allowed\"}"); return; }
         String b = body(e);
         double amount = 0;
         try { amount = Double.parseDouble(extract(b, "amount")); } catch (Exception ex) { }
         financeService.addIncome(
+            userId,
             extract(b, "description"),
             amount,
             extract(b, "date"),
@@ -176,11 +197,13 @@ public class FinanceServer {
 
     private void handleAddExpense(HttpExchange e) throws IOException {
         if (preflight(e)) return;
+        String userId = getUserId(e);
         if (!e.getRequestMethod().equalsIgnoreCase("POST")) { json(e, 405, "{\"error\":\"method not allowed\"}"); return; }
         String b = body(e);
         double amount = 0;
         try { amount = Double.parseDouble(extract(b, "amount")); } catch (Exception ex) { }
         financeService.addExpense(
+            userId,
             extract(b, "description"),
             amount,
             extract(b, "date"),
@@ -191,6 +214,7 @@ public class FinanceServer {
 
     private void handleMonthlyReport(HttpExchange e) throws IOException {
         if (preflight(e)) return;
+        String userId = getUserId(e);
         String query = e.getRequestURI().getQuery();
         String month = "";
         if (query != null) {
@@ -200,20 +224,22 @@ public class FinanceServer {
                 }
             }
         }
-        json(e, 200, financeService.getMonthlyReportJson(month));
+        json(e, 200, financeService.getMonthlyReportJson(userId, month));
     }
 
     private void handleCategoryReport(HttpExchange e) throws IOException {
         if (preflight(e)) return;
-        json(e, 200, financeService.getCategoryReportJson());
+        String userId = getUserId(e);
+        json(e, 200, financeService.getCategoryReportJson(userId));
     }
 
     private void handleExportCsv(HttpExchange e) throws IOException {
         if (preflight(e)) return;
         addCors(e);
+        String userId = getUserId(e);
         e.getResponseHeaders().set("Content-Type", "text/csv");
         e.getResponseHeaders().set("Content-Disposition", "attachment; filename=\"transactions.csv\"");
-        String csv = financeService.exportTransactionsToCSV();
+        String csv = financeService.exportTransactionsToCSV(userId);
         byte[] b = csv.getBytes("UTF-8");
         e.sendResponseHeaders(200, b.length);
         e.getResponseBody().write(b);
@@ -222,6 +248,7 @@ public class FinanceServer {
 
     private void handleInsights(HttpExchange e) throws IOException {
         if (preflight(e)) return;
-        json(e, 200, financeService.getSmartInsightsJson());
+        String userId = getUserId(e);
+        json(e, 200, financeService.getSmartInsightsJson(userId));
     }
 }
