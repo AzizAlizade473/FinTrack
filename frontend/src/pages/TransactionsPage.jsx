@@ -39,6 +39,18 @@ export default function TransactionsPage() {
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [form, setForm] = useState({ description: '', amount: '', date: '', category: '', source: '', merchant: '' });
 
+  const openSalaryModal = () => {
+    setForm({ 
+      description: 'Monthly Salary', 
+      amount: '', 
+      date: new Date().toISOString().split('T')[0], 
+      category: 'Salary', 
+      source: 'Work', 
+      merchant: '' 
+    });
+    setShowIncomeModal(true);
+  };
+
   useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
@@ -154,6 +166,10 @@ export default function TransactionsPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <button onClick={openSalaryModal} className="px-4 py-2 rounded-[10px] bg-green text-white text-[13px] font-bold hover:bg-opacity-90 transition-all active:scale-[0.98] shadow-sm flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            + Add Salary
+          </button>
           <button onClick={() => { setForm({ description: '', amount: '', date: '', category: '', source: '', merchant: '' }); setShowIncomeModal(true); }} className="px-4 py-2 rounded-[10px] border border-green text-green text-[13px] font-semibold hover:bg-green/10 transition-all active:scale-[0.98]">
             + Add Income
           </button>

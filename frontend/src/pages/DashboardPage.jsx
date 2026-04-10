@@ -88,6 +88,65 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <PageHeader title="Dashboard" subtitle={`Welcome back, ${user?.name || 'User'}`} />
 
+      {/* Premium Salary Banner */}
+      {(() => {
+        const salaryBudget = budgets.find(b => b.category.toLowerCase() === 'salary');
+        if (!salaryBudget) return null;
+        
+        const pct = salaryBudget.limit > 0 ? Math.min((salaryBudget.spent / salaryBudget.limit) * 100, 100) : 0;
+        const reached = salaryBudget.spent >= salaryBudget.limit;
+        
+        return (
+          <div className="relative overflow-hidden bg-gradient-to-r from-[#16a34a] to-[#0d9488] rounded-[24px] p-8 text-white shadow-[0_20px_50px_rgba(22,163,74,0.15)] mb-8 group">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
+            <div className="relative flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="px-3 py-1 bg-white/20 rounded-full text-[12px] font-bold tracking-wider uppercase backdrop-blur-md">
+                    Monthly Salary Goal
+                  </span>
+                  {reached && (
+                    <span className="px-3 py-1 bg-white text-[#16a34a] rounded-full text-[12px] font-bold tracking-wider uppercase shadow-sm">
+                      Target Achieved
+                    </span>
+                  )}
+                </div>
+                <h2 className="text-[32px] font-extrabold leading-tight mb-2">
+                  ${salaryBudget.spent.toLocaleString()} <span className="text-white/70 font-medium text-[20px]">earned</span>
+                </h2>
+                <p className="text-white/80 text-[15px] max-w-md">
+                  You have achieved <span className="text-white font-bold">{pct.toFixed(0)}%</span> of your monthly salary target (${salaryBudget.limit.toLocaleString()}).
+                </p>
+              </div>
+              
+              <div className="w-full md:w-64 flex flex-col items-center gap-3">
+                <div className="relative w-32 h-32 flex items-center justify-center">
+                  <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
+                    <circle className="text-white/10" strokeWidth="8" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" />
+                    <circle 
+                      className="text-white transition-all duration-1000 ease-out" 
+                      strokeWidth="8" 
+                      strokeDasharray={2 * Math.PI * 40} 
+                      strokeDashoffset={(1 - pct / 100) * 2 * Math.PI * 40} 
+                      strokeLinecap="round" 
+                      stroke="currentColor" 
+                      fill="transparent" 
+                      r="40" 
+                      cx="50" 
+                      cy="50" 
+                    />
+                  </svg>
+                  <span className="absolute text-[24px] font-black">{pct.toFixed(0)}%</span>
+                </div>
+                <Link to="/transactions" className="mt-2 px-6 py-2.5 bg-white text-[#16a34a] rounded-xl text-[14px] font-bold hover:bg-opacity-90 transition-all shadow-md active:scale-95">
+                  Update Earnings
+                </Link>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {insights.length > 0 && (
         <div className="bg-purple/10 border border-purple/20 rounded-[12px] p-5 flex gap-4 items-start shadow-sm">
           <div className="w-10 h-10 rounded-full bg-purple/20 flex items-center justify-center shrink-0">

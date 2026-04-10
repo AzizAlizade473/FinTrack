@@ -21,6 +21,7 @@ const getCategoryIcon = (category) => {
 export default function BudgetCard({ budget, onDelete }) {
   const catL = budget.category.toLowerCase();
   const isIncomeTarget = catL.includes('salary') || catL.includes('income') || catL.includes('freelance') || catL.includes('bonus');
+  const isPremiumSalary = budget.category.toLowerCase() === 'salary';
   
   const pct = budget.limit > 0 ? Math.min((budget.spent / budget.limit) * 100, 100) : 0;
   const reached = isIncomeTarget && budget.spent >= budget.limit;
@@ -32,27 +33,37 @@ export default function BudgetCard({ budget, onDelete }) {
     if (pct >= 80 && pct < 100) fillClass = "bg-[#f59e0b]";
     if (exceeded) fillClass = "bg-red";
   } else if (reached) {
-     fillClass = "bg-[#0ea5e9]"; // Highlight blue when target reached
+     fillClass = isPremiumSalary ? "bg-white" : "bg-[#0ea5e9]";
   }
 
-  const cardContainerClass = exceeded 
-    ? "bg-[#fff5f5] border-red/30 shadow-[0_4px_12px_rgba(220,38,38,0.1)]" 
-    : (reached ? "bg-green/5 border-green/30 shadow-sm" : "bg-bg-card border-border hover:-translate-y-1 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-md");
+  const cardContainerClass = isPremiumSalary
+    ? "bg-gradient-to-br from-[#16a34a] to-[#059669] text-white border-none shadow-[0_10px_25px_rgba(22,163,74,0.3)] scale-[1.02] overflow-hidden"
+    : (exceeded 
+        ? "bg-[#fff5f5] border-red/30 shadow-[0_4px_12px_rgba(220,38,38,0.1)]" 
+        : (reached ? "bg-green/5 border-green/30 shadow-sm" : "bg-bg-card border-border hover:-translate-y-1 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-md"));
 
   return (
-    <Link to={`/transactions?category=${encodeURIComponent(budget.category)}`} className={`group block rounded-[16px] p-6 border transition-all duration-200 relative ${cardContainerClass} cursor-pointer`}>
+    <Link to={`/transactions?category=${encodeURIComponent(budget.category)}`} className={`group block rounded-[16px] p-6 border transition-all duration-300 relative ${cardContainerClass} cursor-pointer`}>
+      {isPremiumSalary && (
+        <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all duration-500"></div>
+      )}
       {exceeded && (
         <span className="absolute top-4 right-12 bg-red/10 text-red text-[11px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
           Exceeded
         </span>
       )}
-      {reached && (
+      {reached && !isPremiumSalary && (
         <span className="absolute top-4 right-12 bg-green/20 text-green text-[11px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
           Goal Reached
         </span>
       )}
+      {reached && isPremiumSalary && (
+        <span className="absolute top-4 right-4 bg-white/20 text-white text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider backdrop-blur-md">
+          🎉 Fully Funded
+        </span>
+      )}
       <button 
-        className="absolute top-3 right-3 text-[#9ca3af] hover:text-red opacity-0 group-hover:opacity-100 transition-all p-1.5 rounded-md hover:bg-red/10 cursor-pointer" 
+        className={`absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all p-1.5 rounded-md cursor-pointer ${isPremiumSalary ? 'text-white/70 hover:text-white hover:bg-white/10' : 'text-[#9ca3af] hover:text-red hover:bg-red/10'}`} 
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (onDelete) onDelete(budget.category); }}
         title="Delete Budget"
       >
@@ -60,24 +71,24 @@ export default function BudgetCard({ budget, onDelete }) {
       </button>
       
       <div className="flex items-center gap-3 mb-6">
-        <div className={`p-2 rounded-[10px] ${exceeded ? 'bg-red/10 text-red' : (isIncomeTarget ? 'bg-green/10 text-green' : 'bg-purple/10 text-purple')}`}>
+        <div className={`p-2 rounded-[10px] ${isPremiumSalary ? 'bg-white/20 text-white' : (exceeded ? 'bg-red/10 text-red' : (isIncomeTarget ? 'bg-green/10 text-green' : 'bg-purple/10 text-purple'))}`}>
           {getCategoryIcon(budget.category)}
         </div>
-        <h3 className="text-[16px] font-bold text-navy">{budget.category}</h3>
+        <h3 className={`text-[16px] font-bold ${isPremiumSalary ? 'text-white' : 'text-navy'}`}>{budget.category}</h3>
       </div>
       
-      <div className="w-full h-2 bg-[#f3f4f6] rounded-full overflow-hidden mb-2 relative">
+      <div className={`w-full h-2 rounded-full overflow-hidden mb-2 relative ${isPremiumSalary ? 'bg-black/10' : 'bg-[#f3f4f6]'}`}>
         <div
-          className={`h-full rounded-full transition-all duration-700 ease-out delay-100 w-0 ${fillClass}`}
+          className={`h-full rounded-full transition-all duration-1000 ease-out delay-100 w-0 ${fillClass}`}
           style={{ width: `${Math.min(pct, 100)}%` }}
         />
       </div>
       
-      <div className="flex items-center justify-between text-[13px] mt-3">
-        <span className="text-[#6b7280]">
-          <span className={`font-semibold ${exceeded ? 'text-red' : (reached ? 'text-green' : 'text-navy')}`}>${budget.spent.toFixed(2)}</span> {isIncomeTarget ? 'earned' : 'spent'} of ${budget.limit.toFixed(2)}
+      <div className={`flex items-center justify-between text-[13px] mt-3 ${isPremiumSalary ? 'text-white/90' : 'text-[#6b7280]'}`}>
+        <span className="font-medium">
+          <span className={`font-bold ${isPremiumSalary ? 'text-white' : (exceeded ? 'text-red' : (reached ? 'text-green' : 'text-navy'))}`}>${budget.spent.toFixed(2)}</span> {isIncomeTarget ? 'earned' : 'spent'} of ${budget.limit.toFixed(2)}
         </span>
-        <span className={`font-semibold ${exceeded ? 'text-red' : (reached ? 'text-green' : (pct >= 80 && !isIncomeTarget ? 'text-[#f59e0b]' : 'text-green'))}`}>
+        <span className={`font-bold ${isPremiumSalary ? 'text-white' : (exceeded ? 'text-red' : (reached ? 'text-green' : (pct >= 80 && !isIncomeTarget ? 'text-[#f59e0b]' : 'text-green')))}`}>
           {pct.toFixed(0)}%
         </span>
       </div>
