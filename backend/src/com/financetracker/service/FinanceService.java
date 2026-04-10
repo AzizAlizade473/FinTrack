@@ -339,18 +339,28 @@ public class FinanceService {
     public String exportTransactionsToCSV(String userId) {
         List<Transaction> transactions = getAllTransactions(userId);
         StringBuilder sb = new StringBuilder();
+        
+        // Transaction List
+        sb.append("--- DETAILED TRANSACTIONS ---\n");
         sb.append("ID,Date,Type,Category,Description,Merchant/Source,Amount\n");
+        double totalIncome = 0;
+        double totalExpense = 0;
+        java.util.Map<String, Double> catIncomeMap = new java.util.HashMap<>();
+        java.util.Map<String, Double> catExpenseMap = new java.util.HashMap<>();
+
         for (Transaction t : transactions) {
-            String type = (t instanceof Income) ? "Income" : "Expense";
-            String cat = "";
-            String merchant = "";
-            if (t instanceof com.financetracker.interfaces.Categorizable) {
-                cat = ((com.financetracker.interfaces.Categorizable)t).getCategory();
-            }
-            if (t instanceof Income) {
-                merchant = ((Income)t).getSource();
-            } else if (t instanceof Expense) {
-                merchant = ((Expense)t).getMerchant();
+            boolean isInc = (t instanceof Income);
+            String type = isInc ? "Income" : "Expense";
+            String cat = (t instanceof com.financetracker.interfaces.Categorizable) 
+                ? ((com.financetracker.interfaces.Categorizable)t).getCategory() : "Uncategorized";
+            String merchant = isInc ? ((Income)t).getSource() : ((Expense)t).getMerchant();
+
+            if (isInc) {
+                totalIncome += t.getAmount();
+                catIncomeMap.put(cat, catIncomeMap.getOrDefault(cat, 0.0) + t.getAmount());
+            } else {
+                totalExpense += t.getAmount();
+                catExpenseMap.put(cat, catExpenseMap.getOrDefault(cat, 0.0) + t.getAmount());
             }
 
             sb.append(t.getId()).append(",")
@@ -361,6 +371,32 @@ public class FinanceService {
               .append("\"").append(merchant.replace("\"", "\"\"")).append("\",")
               .append(t.getAmount()).append("\n");
         }
+
+        // Summary Sections
+        sb.append("\n\n--- FINANCIAL SUMMARY ---\n");
+        sb.append("Metric,Value\n");
+        sb.append("Total Income,").append(totalIncome).append("\n");
+        sb.append("Total Expenses,").append(totalExpense).append("\n");
+        sb.append("Net Balance,").append(totalIncome - totalExpense).append("\n");
+
+        sb.append("\n--- INCOME BY CATEGORY ---\n");
+        sb.append("Category,Amount,Percentage\n");
+        for (java.util.Map.Entry<String, Double> entry : catIncomeMap.entrySet()) {
+            double pct = totalIncome > 0 ? (entry.getValue() / totalIncome) * 100 : 0;
+            sb.append("\"").append(entry.getKey()).append("\",")
+              .append(entry.getValue()).append(",")
+              .append(String.format("%.1f%%", pct)).append("\n");
+        }
+
+        sb.append("\n--- EXPENSES BY CATEGORY ---\n");
+        sb.append("Category,Amount,Percentage\n");
+        for (java.util.Map.Entry<String, Double> entry : catExpenseMap.entrySet()) {
+            double pct = totalExpense > 0 ? (entry.getValue() / totalExpense) * 100 : 0;
+            sb.append("\"").append(entry.getKey()).append("\",")
+              .append(entry.getValue()).append(",")
+              .append(String.format("%.1f%%", pct)).append("\n");
+        }
+
         return sb.toString();
     }
 
