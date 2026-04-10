@@ -1,39 +1,75 @@
-# FinTrack — Deployment Guide
+# 💎 FinTrack — Premium Personal Finance Tracker
 
-## Backend → Railway
+A robust, full-stack personal finance management application built with **Object-Oriented Programming (OOP)** principles. FinTrack allows users to track income, manage budgets, and visualize spending habits through a high-performance, modern interface.
 
-1. Go to https://railway.app and sign up (free)
-2. Click "New Project" → "Deploy from GitHub repo"
-3. Connect your GitHub and select this repo
-4. Set the root directory to: `/backend`
-5. Railway will detect the Dockerfile and build automatically
-6. Once deployed, copy your Railway public URL (e.g. `https://fintrack-backend.railway.app`)
+---
 
-## Frontend → Vercel
+## 🚀 Key Features
 
-1. Go to https://vercel.com and sign up (free)
-2. Click "New Project" → import your GitHub repo
-3. Set root directory to: `/frontend`
-4. Add environment variable:
-   - **Key**:   `VITE_API_URL`
-   - **Value**: `https://your-railway-url.railway.app`   *(paste Railway URL here)*
-5. Click **Deploy**
-6. Your app will be live at `https://your-app.vercel.app`
+### 💰 Specialized Salary Logic
+- **Premium Salary Tracker**: A dedicated workflow for income tracking with a high-impact dashboard banner.
+- **Goal-Oriented Progress**: Unlike regular expense budgets, Salary categories track positive progress toward earnings targets.
+- **Quick Action**: Dedicated "+ Add Salary" button for one-click income recording.
 
-## Local Development
+### 📊 Advanced Reporting & Data
+- **Detailed CSV Export**: Generate comprehensive financial reports including transaction lists and detailed summaries (Totals, Category breakdowns, and Percentages).
+- **Intelligent Insights**: Real-time feedback on spending health using the Observer pattern for budget alerts.
+- **Interactive Visuals**: Beautiful monthly cash flow charts and categorical hierarchy visualizations.
 
-**Terminal 1 — start backend**
+### 🛡️ Core OOP Architecture
+- **Service Layer Pattern**: Centralized business logic in `FinanceService`.
+- **Observer Pattern**: Dynamic alert system for budget monitoring.
+- **Abstraction & Polymorphism**: Flexible transaction system handling diverse spending and income types.
+- **Persistence Layer**: Clean file-based storage with data integrity checks.
+
+---
+
+## 🛠️ Technology Stack
+
+- **Backend**: Java 8 (Core OOP, HTTP Server, File I/O)
+- **Frontend**: React, Vite, TailwindCSS (Vanilla architecture)
+- **Data**: CSV-based Persistent Storage
+- **Deployment**: Docker, Vercel (Frontend), Railway (Backend)
+
+---
+
+## ⚙️ Local Setup
+
+### 1. Backend (Java)
+Navigate to the `backend` directory:
 ```bash
-cd backend
-javac -d out $(find . -name "*.java")
+# Compile
+javac -d out src/com/financetracker/abstract_base/*.java src/com/financetracker/interfaces/*.java src/com/financetracker/model/*.java src/com/financetracker/pattern/*.java src/com/financetracker/report/*.java src/com/financetracker/server/*.java src/com/financetracker/service/*.java src/com/financetracker/storage/*.java src/com/financetracker/main/*.java
+
+# Run
 java -cp out com.financetracker.main.Main
 ```
 
-**Terminal 2 — start frontend**
+### 2. Frontend (React)
+Navigate to the `frontend` directory:
 ```bash
-cd frontend
 npm install
 npm run dev
 ```
+Visit: `http://localhost:5173`
 
-**Visit** `http://localhost:5173`
+---
+
+## ☁️ Deployment
+
+### Backend → Railway
+1. Set root directory to `/backend`.
+2. Railway detects the `Dockerfile` and deploys automatically.
+
+### Frontend → Vercel
+1. Set root directory to `/frontend`.
+2. Configure `VITE_API_URL` to point to your Railway backend.
+
+---
+
+## 📄 Documentation
+- **UML Class Diagram**: Available in both `UML_Class_Diagram.html` and PDF formats in the root directory.
+- **Implementation Plans**: Detailed history of feature development available in the `.brain` directory.
+
+---
+*Built with ❤️ as an OOP Semester Project.*
