@@ -44,19 +44,48 @@ public class FileStorage {
         File file = new File(filename);
         if (!file.exists()) return;
         try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
-            String line = reader.readLine();
+            String line;
             while ((line = reader.readLine()) != null) {
-                if (line.trim().isEmpty()) continue;
+                line = line.trim();
+                if (line.isEmpty()) continue;
                 String[] parts = line.split(",", -1);
-                if (parts.length >= 7) {
-                    String userId = parts[0].trim();
-                    String type = parts[1].trim();
-                    String id = parts[2].trim();
-                    double amount = Double.parseDouble(parts[3].trim());
-                    String date = parts[4].trim();
-                    String description = unescapeCSV(parts[5].trim());
-                    String category = unescapeCSV(parts[6].trim());
-                    String source = parts.length > 7 ? unescapeCSV(parts[7].trim()) : "";
+                
+                // Skip header if present
+                if (parts[0].equalsIgnoreCase("userId") || parts[0].equalsIgnoreCase("type")) continue;
+
+                try {
+                    String userId;
+                    String type;
+                    String id;
+                    double amount;
+                    String date;
+                    String description;
+                    String category;
+                    String source = "";
+
+                    if (parts.length == 7) {
+                        // Migration path for old format (7 columns)
+                        userId = "demo001";
+                        type = parts[0].trim();
+                        id = parts[1].trim();
+                        amount = Double.parseDouble(parts[2].trim());
+                        date = parts[3].trim();
+                        description = unescapeCSV(parts[4].trim());
+                        category = unescapeCSV(parts[5].trim());
+                        if (parts.length > 6) source = unescapeCSV(parts[6].trim());
+                    } else if (parts.length >= 8) {
+                        // New format (8 columns)
+                        userId = parts[0].trim();
+                        type = parts[1].trim();
+                        id = parts[2].trim();
+                        amount = Double.parseDouble(parts[3].trim());
+                        date = parts[4].trim();
+                        description = unescapeCSV(parts[5].trim());
+                        category = unescapeCSV(parts[6].trim());
+                        source = unescapeCSV(parts[7].trim());
+                    } else {
+                        continue; // Invalid format
+                    }
 
                     User user = findUser(users, userId);
                     if (user != null) {
@@ -66,6 +95,8 @@ public class FileStorage {
                             user.getTransactions().add(new Expense(id, amount, date, description, category));
                         }
                     }
+                } catch (Exception e) {
+                    System.err.println("Skipping malformed transaction line: " + line);
                 }
             }
         } catch (IOException e) {
@@ -129,22 +160,43 @@ public class FileStorage {
         File file = new File(filename);
         if (!file.exists()) return;
         try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
-            String line = reader.readLine();
+            String line;
             while ((line = reader.readLine()) != null) {
-                if (line.trim().isEmpty()) continue;
+                line = line.trim();
+                if (line.isEmpty()) continue;
                 String[] parts = line.split(",", -1);
-                if (parts.length >= 4) {
-                    String userId = parts[0].trim();
-                    String category = unescapeCSV(parts[1].trim());
-                    double limit = Double.parseDouble(parts[2].trim());
-                    double spent = Double.parseDouble(parts[3].trim());
-                    
+                
+                if (parts[0].equalsIgnoreCase("userId") || parts[0].equalsIgnoreCase("category")) continue;
+
+                try {
+                    String userId;
+                    String category;
+                    double limit;
+                    double spent;
+
+                    if (parts.length == 3) {
+                        // Old format: category,limit,spent
+                        userId = "demo001";
+                        category = unescapeCSV(parts[0].trim());
+                        limit = Double.parseDouble(parts[1].trim());
+                        spent = Double.parseDouble(parts[2].trim());
+                    } else if (parts.length >= 4) {
+                        userId = parts[0].trim();
+                        category = unescapeCSV(parts[1].trim());
+                        limit = Double.parseDouble(parts[2].trim());
+                        spent = Double.parseDouble(parts[3].trim());
+                    } else {
+                        continue;
+                    }
+
                     User user = findUser(users, userId);
                     if (user != null) {
                         Budget b = new Budget(category, limit);
                         b.setSpent(spent);
                         user.addBudget(b);
                     }
+                } catch (Exception e) {
+                    System.err.println("Skipping malformed budget line: " + line);
                 }
             }
         } catch (IOException e) {
