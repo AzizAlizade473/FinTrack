@@ -73,7 +73,7 @@ public class FinanceServer {
         int colon = json.indexOf(":", i);
         if (colon == -1) return "";
         int pos = colon + 1;
-        while (pos < json.length() && json.charAt(pos) == ' ') pos++;
+        while (pos < json.length() && Character.isWhitespace(json.charAt(pos))) pos++;
         if (pos >= json.length()) return "";
         if (json.charAt(pos) == '"') {
             int quote2 = json.indexOf("\"", pos + 1);
@@ -91,9 +91,9 @@ public class FinanceServer {
     private String getUserId(HttpExchange e) {
         String userId = e.getRequestHeaders().getFirst("X-User-Id");
         if (userId == null) {
-            userId = ""; // or throw exception? Better to just return empty and let service handle nulls cleanly, but service expects valid ID.
+            userId = e.getRequestHeaders().getFirst("x-user-id");
         }
-        return userId;
+        return userId != null ? userId.trim() : "";
     }
 
     private void handleHealth(HttpExchange e) throws IOException {
@@ -144,23 +144,39 @@ public class FinanceServer {
     private void handleBudgets(HttpExchange e) throws IOException {
         if (preflight(e)) return;
         String userId = getUserId(e);
+        if (userId.isEmpty()) {
+            json(e, 401, "{\"error\":\"unauthorized: missing X-User-Id\"}");
+            return;
+        }
+
         if (e.getRequestMethod().equalsIgnoreCase("GET")) {
             json(e, 200, financeService.getBudgetsJson(userId));
         } else if (e.getRequestMethod().equalsIgnoreCase("POST")) {
             String b = body(e);
             String category = extract(b, "category");
             String limitStr = extract(b, "limit");
+            if (category.isEmpty() || limitStr.isEmpty()) {
+                json(e, 400, "{\"error\":\"category and limit are required\"}");
+                return;
+            }
             double limit = 0;
-            try { limit = Double.parseDouble(limitStr); } catch (Exception ex) { }
-            financeService.setBudget(userId, category, limit);
-            json(e, 200, "{\"status\":\"success\"}");
+            try { limit = Double.parseDouble(limitStr); } catch (Exception ex) { 
+                json(e, 400, "{\"error\":\"invalid limit value\"}");
+                return;
+            }
+            com.financetracker.model.Budget budget = financeService.setBudget(userId, category, limit);
+            if (budget != null) {
+                json(e, 200, "{\"status\":\"success\"}");
+            } else {
+                json(e, 404, "{\"error\":\"user not found\"}");
+            }
         } else if (e.getRequestMethod().equalsIgnoreCase("DELETE")) {
             String path = e.getRequestURI().getPath();
             String category = path.substring(path.lastIndexOf("/") + 1);
-            // decode URL if category has spaces (which it likely doesn't or does)
             try { category = java.net.URLDecoder.decode(category, "UTF-8"); } catch(Exception ignored){}
-            financeService.deleteBudget(userId, category);
-            json(e, 200, "{\"status\":\"success\"}");
+            boolean ok = financeService.deleteBudget(userId, category);
+            if (ok) json(e, 200, "{\"status\":\"success\"}");
+            else json(e, 404, "{\"error\":\"budget not found or user not found\"}");
         }
     }
 

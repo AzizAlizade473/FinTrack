@@ -28,7 +28,8 @@ public class Budget implements com.financetracker.interfaces.Trackable {
     }
 
     public String toJson() {
-        return "{\"category\":\"" + category + "\",\"limit\":" + limit + ",\"spent\":" + spent + "}";
+        boolean exceeded = isExceeded();
+        return "{\"category\":\"" + category.replace("\"", "\\\"") + "\",\"limit\":" + limit + ",\"spent\":" + spent + ",\"exceeded\":" + exceeded + "}";
     }
 
     @Override
