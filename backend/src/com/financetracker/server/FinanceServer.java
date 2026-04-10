@@ -41,7 +41,7 @@ public class FinanceServer {
     private void addCors(HttpExchange e) {
         e.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
         e.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
-        e.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
+        e.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type, X-User-Id");
     }
 
     private boolean preflight(HttpExchange e) throws IOException {
