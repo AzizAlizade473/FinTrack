@@ -28,6 +28,7 @@ public class FileStorage {
                     } else if (t instanceof Expense) {
                         Expense exp = (Expense) t;
                         category = exp.getCategory();
+                        source = exp.getMerchant();
                     }
                     writer.write(user.getUserId() + "," + type + "," + t.getId() + "," + t.getAmount() + ","
                             + t.getDate() + "," + escapeCSV(t.getDescription()) + ","
@@ -92,7 +93,7 @@ public class FileStorage {
                         if ("INCOME".equals(type)) {
                             user.getTransactions().add(new Income(id, amount, date, description, source, category));
                         } else if ("EXPENSE".equals(type)) {
-                            user.getTransactions().add(new Expense(id, amount, date, description, category));
+                            user.getTransactions().add(new Expense(id, amount, date, description, category, source));
                         }
                     }
                 } catch (Exception e) {

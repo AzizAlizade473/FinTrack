@@ -154,20 +154,29 @@ public class FinanceService {
         Budget budget = user.getBudgetByCategory(category);
         if(budget == null) return;
 
-        double totalSpent = 0;
+        boolean isIncomeCategory = isIncomeCentric(category);
+        double total = 0;
         for (Transaction t : user.getTransactions()) {
             if (t instanceof com.financetracker.interfaces.Categorizable) {
                 com.financetracker.interfaces.Categorizable catItem = (com.financetracker.interfaces.Categorizable) t;
                 if (catItem.getCategory() != null && catItem.getCategory().equalsIgnoreCase(category)) {
-                    if (t instanceof Expense) {
-                        totalSpent += t.getAmount();
-                    } else if (t instanceof Income) {
-                        totalSpent -= t.getAmount();
+                    if (isIncomeCategory) {
+                        // For income categories, we aggregate Income (+)
+                        if (t instanceof Income) total += t.getAmount();
+                    } else {
+                        // For expense budgets, we aggregate Expense (-) and Income (+)
+                        if (t instanceof Expense) total += t.getAmount();
+                        else if (t instanceof Income) total -= t.getAmount();
                     }
                 }
             }
         }
-        budget.setSpent(totalSpent);
+        budget.setSpent(total);
+    }
+
+    private boolean isIncomeCentric(String category) {
+        String cat = category.toLowerCase();
+        return cat.contains("salary") || cat.contains("income") || cat.contains("freelance") || cat.contains("bonus");
     }
 
     public MonthlySummaryReport generateMonthlyReport(String userId, String month) {
@@ -330,17 +339,26 @@ public class FinanceService {
     public String exportTransactionsToCSV(String userId) {
         List<Transaction> transactions = getAllTransactions(userId);
         StringBuilder sb = new StringBuilder();
-        sb.append("Date,Type,Description,Category,Amount\n");
+        sb.append("ID,Date,Type,Category,Description,Merchant/Source,Amount\n");
         for (Transaction t : transactions) {
             String type = (t instanceof Income) ? "Income" : "Expense";
             String cat = "";
+            String merchant = "";
             if (t instanceof com.financetracker.interfaces.Categorizable) {
                 cat = ((com.financetracker.interfaces.Categorizable)t).getCategory();
             }
-            sb.append(t.getDate()).append(",")
+            if (t instanceof Income) {
+                merchant = ((Income)t).getSource();
+            } else if (t instanceof Expense) {
+                merchant = ((Expense)t).getMerchant();
+            }
+
+            sb.append(t.getId()).append(",")
+              .append(t.getDate()).append(",")
               .append(type).append(",")
+              .append("\"").append(cat.replace("\"", "\"\"")).append("\",")
               .append("\"").append(t.getDescription().replace("\"", "\"\"")).append("\",")
-              .append("\"").append(cat).append("\",")
+              .append("\"").append(merchant.replace("\"", "\"\"")).append("\",")
               .append(t.getAmount()).append("\n");
         }
         return sb.toString();

@@ -6,10 +6,16 @@ import com.financetracker.interfaces.Categorizable;
 
 public class Expense extends Transaction implements Trackable, Categorizable {
     private String category;
+    private String merchant;
 
-    public Expense(String id, double amount, String date, String description, String category) {
+    public Expense(String id, double amount, String date, String description, String category, String merchant) {
         super(id, amount, date, description);
         this.category = category;
+        this.merchant = merchant != null ? merchant : "";
+    }
+
+    public Expense(String id, double amount, String date, String description, String category) {
+        this(id, amount, date, description, category, "");
     }
 
     @Override
@@ -21,9 +27,12 @@ public class Expense extends Transaction implements Trackable, Categorizable {
     @Override
     public void setCategory(String category) { this.category = category; }
 
+    public String getMerchant() { return merchant; }
+    public void setMerchant(String merchant) { this.merchant = merchant; }
+
     @Override
     public String track() {
-        return "Tracking Expense: " + getDescription() + " - $" + getAmount();
+        return "Tracking Expense: " + getDescription() + " at " + merchant + " - $" + getAmount();
     }
 
     @Override
@@ -33,11 +42,12 @@ public class Expense extends Transaction implements Trackable, Categorizable {
                "\"amount\":" + getAmount() + "," +
                "\"date\":\"" + getDate() + "\"," +
                "\"description\":\"" + getDescription() + "\"," +
-               "\"category\":\"" + getCategory() + "\"}";
+               "\"category\":\"" + getCategory() + "\"," +
+               "\"merchant\":\"" + merchant.replace("\"", "\\\"") + "\"}";
     }
 
     @Override
     public String getSummary() {
-        return "Expense: " + getDescription() + " | Amount: $" + getAmount() + " | Category: " + category;
+        return "Expense: " + getDescription() + " | Merchant: " + merchant + " | Amount: $" + getAmount() + " | Category: " + category;
     }
 }

@@ -37,7 +37,7 @@ export default function TransactionsPage() {
   // Modals
   const [showIncomeModal, setShowIncomeModal] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
-  const [form, setForm] = useState({ description: '', amount: '', date: '', category: '', source: '' });
+  const [form, setForm] = useState({ description: '', amount: '', date: '', category: '', source: '', merchant: '' });
 
   useEffect(() => { fetchData(); }, []);
 
@@ -68,7 +68,7 @@ export default function TransactionsPage() {
         setShowExpenseModal(false);
       }
       showToast(`${type === 'income' ? 'Income' : 'Expense'} added!`);
-      setForm({ description: '', amount: '', date: '', category: '', source: '' });
+      setForm({ description: '', amount: '', date: '', category: '', source: '', merchant: '' });
       fetchTransactions();
     } catch { showToast('Failed to add transaction', 'error'); }
   };
@@ -154,10 +154,10 @@ export default function TransactionsPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button onClick={() => { setForm({ description: '', amount: '', date: '', category: '', source: '' }); setShowIncomeModal(true); }} className="px-4 py-2 rounded-[10px] border border-green text-green text-[13px] font-semibold hover:bg-green/10 transition-all active:scale-[0.98]">
+          <button onClick={() => { setForm({ description: '', amount: '', date: '', category: '', source: '', merchant: '' }); setShowIncomeModal(true); }} className="px-4 py-2 rounded-[10px] border border-green text-green text-[13px] font-semibold hover:bg-green/10 transition-all active:scale-[0.98]">
             + Add Income
           </button>
-          <button onClick={() => { setForm({ description: '', amount: '', date: '', category: '', source: '' }); setShowExpenseModal(true); }} className="px-4 py-2 rounded-[10px] border border-red text-red text-[13px] font-semibold hover:bg-red/10 transition-all active:scale-[0.98]">
+          <button onClick={() => { setForm({ description: '', amount: '', date: '', category: '', source: '', merchant: '' }); setShowExpenseModal(true); }} className="px-4 py-2 rounded-[10px] border border-red text-red text-[13px] font-semibold hover:bg-red/10 transition-all active:scale-[0.98]">
             + Add Expense
           </button>
         </div>
@@ -170,6 +170,7 @@ export default function TransactionsPage() {
               <tr className="border-b border-border bg-[#fafafa]">
                 <th className="px-6 py-4 text-[12px] font-bold text-[#6b7280] uppercase tracking-wider">Date</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-[#6b7280] uppercase tracking-wider">Description</th>
+                <th className="px-6 py-4 text-[12px] font-bold text-[#6b7280] uppercase tracking-wider">Merchant/Source</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-[#6b7280] uppercase tracking-wider">Category</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-[#6b7280] uppercase tracking-wider">Type</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-[#6b7280] uppercase tracking-wider text-right">Amount</th>
@@ -177,10 +178,15 @@ export default function TransactionsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filtered.map(t => (
-                <tr key={t.id} className="hover:bg-hover transition-colors group">
+              {filtered.map(t => {
+                const isSalary = t.category?.toLowerCase() === 'salary';
+                return (
+                <tr key={t.id} className={`transition-colors group ${isSalary ? 'bg-green/5 hover:bg-green/10' : 'hover:bg-hover'}`}>
                   <td className="px-6 py-4 text-[14px] text-[#6b7280] whitespace-nowrap">{t.date}</td>
-                  <td className="px-6 py-4 text-[14px] font-bold text-navy truncate max-w-[200px]">{t.description}</td>
+                  <td className="px-6 py-4 text-[14px] font-bold text-navy truncate max-w-[150px]">{t.description}</td>
+                  <td className="px-6 py-4 text-[13px] text-navy font-medium italic opacity-80 whitespace-nowrap">
+                    {t.merchant || t.source || '-'}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide ${getCategoryColor(t.category)}`}>
                       {t.category}
@@ -200,7 +206,7 @@ export default function TransactionsPage() {
                     </button>
                   </td>
                 </tr>
-              ))}
+              )})}
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan="6" className="px-6 py-12 text-center text-[#9ca3af] text-[14px]">
@@ -225,6 +231,10 @@ export default function TransactionsPage() {
 
       <Modal isOpen={showExpenseModal} onClose={() => setShowExpenseModal(false)} title="Add Expense">
         {formFields}
+        <div className="mt-4">
+          <label className="block text-[13px] font-medium text-navy mb-1.5">Merchant / Payee</label>
+          <input value={form.merchant} onChange={e => setForm({ ...form, merchant: e.target.value })} className="w-full px-4 py-3 rounded-[10px] bg-white border border-border text-navy placeholder-[#9ca3af] focus:border-purple focus:ring-2 focus:ring-purple/20 focus:outline-none transition-all text-[14px]" placeholder="e.g. Amazon, Starbucks" />
+        </div>
         <button onClick={() => handleAdd('expense')} className="w-full mt-6 py-3 rounded-[10px] bg-navy text-white text-[14px] font-semibold hover:bg-opacity-90 transition-all active:scale-[0.98]">Save Expense</button>
       </Modal>
     </div>

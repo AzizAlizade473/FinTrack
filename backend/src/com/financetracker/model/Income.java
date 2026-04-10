@@ -38,7 +38,8 @@ public class Income extends Transaction implements Trackable, Categorizable {
                "\"amount\":" + getAmount() + "," +
                "\"date\":\"" + getDate() + "\"," +
                "\"description\":\"" + getDescription() + "\"," +
-               "\"category\":\"" + getCategory() + "\"}";
+               "\"category\":\"" + getCategory() + "\"," +
+               "\"source\":\"" + source.replace("\"", "\\\"") + "\"}";
     }
 
     @Override
