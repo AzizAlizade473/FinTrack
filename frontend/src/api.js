@@ -90,13 +90,20 @@ export const deleteTransaction = async (id) => {
 
 export const exportCSV = async () => {
   try {
-    const response = await fetch(`${BASE_URL}/api/transactions/export`);
+    const userStr = localStorage.getItem('user');
+    const headers = {};
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      if (user.userId) headers['X-User-Id'] = user.userId;
+    }
+
+    const response = await fetch(`${BASE_URL}/api/transactions/export`, { headers });
     if (!response.ok) throw new Error('Export failed');
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'transactions.csv';
+    a.download = `fintrack_report_${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
