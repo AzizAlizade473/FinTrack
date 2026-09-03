@@ -72,4 +72,4 @@ Visit: `http://localhost:5173`
 - **Implementation Plans**: Detailed history of feature development available in the `.brain` directory.
 
 ---
-*Built with ❤️ as an OOP Semester Project.*
+*Built with ❤️ as an OOP Semester Project.*.....
