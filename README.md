@@ -60,7 +60,7 @@ Visit: `http://localhost:5173`
 ### Backend → Railway
 1. Set root directory to `/backend`.
 2. Railway detects the `Dockerfile` and deploys automatically.
-
+.
 ### Frontend → Vercel
 1. Set root directory to `/frontend`.
 2. Configure `VITE_API_URL` to point to your Railway backend.
